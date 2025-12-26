@@ -1,43 +1,67 @@
 using System;
-using UnityEngine;
-using UnityEngine.Serialization;
+using System.Linq;
 
 namespace Nox.CCK.Utils {
 	[Serializable]
-	public class ResourceIdentifier {
-		public string group;
+	public struct ResourceIdentifier {
+		public static ResourceIdentifier Invalid
+			=> default;
+
+		public const char   PathSeparator    = '/';
+		public const char   PartSeparator    = ':';
+		public const string DefaultNamespace = "";
+
+		public bool IsValid()
+			=> !string.IsNullOrEmpty(@namespace) || path is { Length: > 0 };
+
+		public string   @namespace;
 		public string[] path;
 
-		public string GetGroup()
-			=> group;
+		public string Namespace
+			=> @namespace;
 
-		public string[] GetPath()
+		public string[] SplitPath
 			=> path;
 
-		public ResourceIdentifier(string group, params string[] path) {
-			this.group = group;
-			this.path  = path;
+		public string Path
+			=> string.Join(PathSeparator, path);
+
+		public ResourceIdentifier(string @namespace, string[] path) {
+			this.@namespace = @namespace;
+			this.path       = path;
+		}
+
+		public ResourceIdentifier(string @namespace, string path) {
+			this.@namespace = @namespace;
+			this.path = path.Split(PathSeparator)
+				.Where(p => !string.IsNullOrEmpty(p))
+				.ToArray();
 		}
 
 		public static ResourceIdentifier Parse(string identifier) {
 			if (string.IsNullOrEmpty(identifier))
-				throw new ArgumentException("Identifier cannot be null or empty.", nameof(identifier));
+				return Invalid;
 
-			var groupAndPath = identifier.Split(new[] { ':' }, 2);
-			var group        = groupAndPath.Length > 1 ? groupAndPath[0] : string.Empty;
-			var path = (groupAndPath.Length > 1 ? groupAndPath[1] : groupAndPath[0])
-				.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+			var groupAndPath = identifier.Split(PartSeparator, 2);
+			var group        = groupAndPath.Length > 1 ? groupAndPath[0] : DefaultNamespace;
+			var path         = groupAndPath.Length > 1 ? groupAndPath[1] : groupAndPath[0];
 
 			return new ResourceIdentifier(group, path);
 		}
 
-		public bool HasGroup()
-			=> !string.IsNullOrEmpty(group);
+		public bool HasNamespace()
+			=> !string.IsNullOrEmpty(@namespace);
 
 		public bool HasPath()
 			=> path.Length > 0;
 
 		public override string ToString()
-			=> $"{group}{(HasPath() && HasGroup() ? ":" : "")}{string.Join("/", path)}";
+			=> $"{@namespace}{(HasPath() && HasNamespace() ? PartSeparator : "")}{string.Join(PathSeparator, path)}";
+
+		public static implicit operator string(ResourceIdentifier identifier)
+			=> identifier.ToString();
+
+		public static implicit operator ResourceIdentifier(string identifier)
+			=> Parse(identifier);
 	}
 }

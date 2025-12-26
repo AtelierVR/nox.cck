@@ -6,7 +6,7 @@ namespace Nox.CCK.Mods.Cores
     /// <summary>
     /// Core API for editor mods, providing access to editor-specific APIs.
     /// </summary>
-    public interface EditorModCoreAPI : IModCoreAPI
+    public interface IEditorModCoreAPI : IModCoreAPI
     {
         /// <summary>
         /// Gets the panel management API for the editor.

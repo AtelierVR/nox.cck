@@ -1,15 +1,11 @@
 namespace Nox.CCK.Network {
+	/// <summary>
+	/// Interface for objects that can be marked as "dirty" when modified.
+	/// </summary>
 	public interface IDirty {
 		/// <summary>
-		/// Check if the object is dirty (has been modified).
+		/// Indicates whether the object has been modified since the last sync.
 		/// </summary>
-		/// <returns></returns>
-		public DirtyBy GetDirty();
-
-		/// <summary>
-		/// Mark the object as dirty or clean.
-		/// </summary>
-		/// <param name="dirty"></param>
-		public void SetDirty(DirtyBy dirty);
+		public bool IsDirty { get; set; }
 	}
 }

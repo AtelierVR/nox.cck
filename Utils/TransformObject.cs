@@ -1,7 +1,7 @@
 using UnityEngine;
 
 namespace Nox.CCK.Utils {
-	public class Transform {
+	public class TransformObject {
 		public const float DefaultThreshold = 0.0001f;
 		private Vector3        _position;
 		private Quaternion     _rotation;
@@ -138,14 +138,14 @@ namespace Nox.CCK.Utils {
 		/// <summary>
 		/// Create a new empty transform.
 		/// </summary>
-		public Transform() { }
+		public TransformObject() { }
 
 		/// <summary>
 		/// Create a new transform with a position, rotation, scale, velocity and angular velocity.
 		/// </summary>
 		/// <param name="transform">Transform of a gameobject</param>
 		/// <param name="rigidbody">Rigidbody of a gameobject</param>
-		public Transform(UnityEngine.Transform transform, Rigidbody rigidbody = null) {
+		public TransformObject(UnityEngine.Transform transform, Rigidbody rigidbody = null) {
 			SetPosition(transform.position);
 			SetRotation(transform.rotation);
 			SetScale(transform.localScale);
@@ -160,7 +160,7 @@ namespace Nox.CCK.Utils {
 		/// <param name="transform">Transform to compare</param>
 		/// <param name="threshold">Threshold for the comparison (optional)</param>
 		/// <returns>True if the transform is equal</returns>
-		public bool Equals(Transform transform, float threshold = DefaultThreshold)
+		public bool Equals(TransformObject transform, float threshold = DefaultThreshold)
 			=> _flags == transform._flags
 				&& IsSamePosition(transform._position, threshold)
 				&& IsSameRotation(transform._rotation, threshold)

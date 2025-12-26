@@ -735,7 +735,7 @@ namespace Nox.CCK.Network {
 		}
 
 		public static int Hash(this string s)
-			=> Animator.StringToHash(s);
+			=> Utils.Hash.CRC32(s);
 
 		public static bool ToBool(this object value)
 			=> value switch {

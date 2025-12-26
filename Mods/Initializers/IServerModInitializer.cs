@@ -10,14 +10,14 @@ namespace Nox.CCK.Mods.Initializers {
 		/// Called when the mod is being initialized on the server.
 		/// </summary>
 		/// <param name="api">The server core API.</param>
-		public void OnInitializeServer(ServerModCoreAPI api) { }
+		public void OnInitializeServer(IServerModCoreAPI api) { }
 
 		/// <summary>
 		/// Called asynchronously when the mod is being initialized on the server.
 		/// </summary>
 		/// <param name="api">The server core API.</param>
 		/// <returns>A task representing the asynchronous operation.</returns>
-		public UniTask OnInitializeServerAsync(ServerModCoreAPI api)
+		public UniTask OnInitializeServerAsync(IServerModCoreAPI api)
 			=> UniTask.CompletedTask;
 
 		/// <summary>

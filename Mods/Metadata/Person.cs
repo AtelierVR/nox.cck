@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Nox.CCK.Mods.Metadata
 {
-    public interface Person
+    public interface IPerson
     {
         string GetName();
         string GetEmail();

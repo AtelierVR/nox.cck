@@ -354,21 +354,66 @@ namespace Nox.CCK.Utils {
 					}
 				);
 
+				if (History.Count > MaxLogLines)
+					History.RemoveAt(0);
+
+				var entry = new LogEntry {
+					Type      = type,
+					Tag       = tag,
+					Message   = message.ToString(),
+					Context   = context,
+					Timestamp = timestamp
+				};
+				History.Add(entry);
+
+				var parsed = ParseToString(entry);
+
 				switch (type) {
-					case LogType.Log:       ULogger.Log($"[<color=cyan>{type}</color>] {(string.IsNullOrEmpty(tag) ? "" : $"[{tag}]")} {message}", context); break;
-					case LogType.Warning:   ULogger.LogWarning($"[<color=yellow>{type}</color>] {message}", context); break;
-					case LogType.Error:     ULogger.LogError($"[<color=red>{type}</color>] {message}", context); break;
-					case LogType.Exception: ULogger.LogException(message as Exception, context); break;
-					case LogType.Debug:     ULogger.Log($"[<color=green>{type}</color>] {message}", context); break;
-					case LogType.Assert:    ULogger.LogAssertion($"[<color=magenta>{type}</color>] {message}", context); break;
+					case LogType.Log:       ULogger.Log(parsed, context); break;
+					case LogType.Warning:   ULogger.LogWarning(parsed, context); break;
+					case LogType.Error:     ULogger.LogError(parsed, context); break;
+					case LogType.Exception: ULogger.LogException(message is Exception ex ? ex : new Exception(message.ToString()), context); break;
+					case LogType.Debug:     ULogger.Log(parsed, context); break;
+					case LogType.Assert:    ULogger.LogAssertion(parsed, context); break;
 					#if UNITY_EDITOR
-					case LogType.Editor: ULogger.Log($"[<color=blue>{type}</color>] {message}", context); break;
+					case LogType.Editor: ULogger.Log(parsed, context); break;
 					#endif
-					default: ULogger.Log($"[<color=white>{type}</color>] {message}", context); break;
+					default: ULogger.Log(parsed, context); break;
 				}
 			} catch (Exception e) {
 				ULogger.LogException(e);
 			}
+		}
+
+		private static string ParseToString(LogEntry entry) {
+			var tagPart = string.IsNullOrEmpty(entry.Tag) ? "" : $" [<color=#{ColorFromTag(entry.Tag):X6}>{entry.Tag}</color>]";
+			return $"<b>[<color=#{ColorFromType(entry.Type):X6}>{entry.Type.ToString().ToUpperInvariant()}</color>]{tagPart}</b> {entry.Message}";
+		}
+
+		private static int ColorFromTag(string tag) {
+			if (string.IsNullOrEmpty(tag))
+				return 0xFFFFFF;
+
+			var hash = tag.GetHashCode();
+			var r    = (hash & 0xFF0000) >> 16;
+			var g    = (hash & 0x00FF00) >> 8;
+			var b    = (hash & 0x0000FF);
+			return (r << 16) | (g << 8) | b;
+		}
+
+		private static int ColorFromType(LogType type) {
+			return type switch {
+				LogType.Error     => 0xFF0000,
+				LogType.Warning   => 0xFFFF00,
+				LogType.Log       => 0xFFFFFF,
+				LogType.Exception => 0xFF00FF,
+				LogType.Debug     => 0x00FFFF,
+				LogType.Assert    => 0xFFA500,
+				#if UNITY_EDITOR
+				LogType.Editor => 0x00FF00,
+				#endif
+				_ => 0xFFFFFF
+			};
 		}
 	}
 

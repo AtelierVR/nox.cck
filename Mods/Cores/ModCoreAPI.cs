@@ -14,7 +14,7 @@ namespace Nox.CCK.Mods.Cores {
 		/// <summary>
 		/// Gets the metadata of the current mod.
 		/// </summary>
-		public ModMetadata ModMetadata { get; }
+		public IModMetadata ModMetadata { get; }
 
 		/// <summary>
 		/// Gets the chat management API.

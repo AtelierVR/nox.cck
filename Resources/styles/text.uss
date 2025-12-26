@@ -104,5 +104,17 @@
     color: var(--color-white);
 }
 
+.text-bold {
+    -unity-font-style: bold;
+}
+
+.text-italic {
+    -unity-font-style: italic;
+}
+
+.text-none {
+    -unity-font-style: normal;
+}
+
 
 

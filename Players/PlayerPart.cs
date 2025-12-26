@@ -1,14 +1,14 @@
+using Nox.CCK.Utils;
 using UnityEngine;
-using Transform = Nox.CCK.Utils.Transform;
 
 namespace Nox.CCK.Players
 {
     public class PlayerPart
     {
         public readonly PlayerRig Rig;
-        public readonly Transform Transform;
+        public readonly TransformObject Transform;
         
-        public PlayerPart(PlayerRig rig, Transform transform)
+        public PlayerPart(PlayerRig rig, TransformObject transform)
         {
             Rig = rig;
             Transform = transform;

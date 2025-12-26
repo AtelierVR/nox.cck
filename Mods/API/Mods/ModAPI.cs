@@ -45,7 +45,7 @@ namespace Nox.CCK.Mods.Mods {
 		/// </summary>
 		/// <param name="id">The mod identifier.</param>
 		/// <returns>The mod metadata.</returns>
-		public ModMetadata GetMetadata(string id);
+		public IModMetadata GetMetadata(string id);
 
 		/// <summary>
 		/// Gets the current mod instance (the mod calling this method).

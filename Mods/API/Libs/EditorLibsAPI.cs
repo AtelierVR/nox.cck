@@ -12,6 +12,6 @@ namespace Nox.CCK.Mods.Libs
         /// </summary>
         /// <param name="path">The path to the mod metadata file.</param>
         /// <returns>The loaded mod metadata.</returns>
-        public ModMetadata LoadMetadata(string path);
+        public IModMetadata LoadMetadata(string path);
     }
 }

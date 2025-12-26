@@ -10,14 +10,14 @@ namespace Nox.CCK.Mods.Initializers {
 		/// Called when the mod is being initialized in the editor.
 		/// </summary>
 		/// <param name="api">The editor core API.</param>
-		public void OnInitializeEditor(EditorModCoreAPI api) { }
+		public void OnInitializeEditor(IEditorModCoreAPI api) { }
 
 		/// <summary>
 		/// Called asynchronously when the mod is being initialized in the editor.
 		/// </summary>
 		/// <param name="api">The editor core API.</param>
 		/// <returns>A task representing the asynchronous operation.</returns>
-		public UniTask OnInitializeEditorAsync(EditorModCoreAPI api)
+		public UniTask OnInitializeEditorAsync(IEditorModCoreAPI api)
 			=> UniTask.CompletedTask;
 
 		/// <summary>

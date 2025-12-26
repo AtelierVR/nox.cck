@@ -1,8 +1,6 @@
-using System.Configuration.Assemblies;
-
 namespace Nox.CCK.Mods.Metadata
 {
-    public interface Relation
+    public interface IRelation
     {
         string GetId();
         Utils.VersionMatching GetVersion();

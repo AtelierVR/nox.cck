@@ -4,7 +4,7 @@ namespace Nox.CCK.Mods.Metadata
     {
         string         GetNamespace();
         string         GetFile();
-        Engine         GetEngine();
+        IEngine         GetEngine();
         Utils.Platform GetPlatform();
         bool           IsCompatible();
     }

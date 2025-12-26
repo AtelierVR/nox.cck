@@ -12,10 +12,16 @@ namespace Nox.CCK.Mods {
 	/// </summary>
 	public interface IMod {
 		/// <summary>
+		/// Gets the type of the mod.
+		/// </summary>
+		/// <returns></returns>
+		public string GetModType();
+		
+		/// <summary>
 		/// Gets the metadata of the mod.
 		/// </summary>
 		/// <returns>The mod metadata.</returns>
-		public ModMetadata GetMetadata();
+		public IModMetadata GetMetadata();
 
 		/// <summary>
 		/// Gets a data value associated with the specified key.

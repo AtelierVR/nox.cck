@@ -1,6 +1,6 @@
 namespace Nox.CCK.Mods.Metadata
 {
-    public interface Engine
+    public interface IEngine
     {
         Utils.Engine GetName();
         Utils.VersionMatching GetVersion();

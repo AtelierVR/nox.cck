@@ -15,13 +15,14 @@ namespace Nox.CCK.Build {
 		/// <summary>
 		/// Synchronously compiles the component (optional).
 		/// </summary>
-		void Compile() { }
+		internal CompilationResult Compile(params object[] args)
+			=> CompilationResult.Done;
 
 		/// <summary>
 		/// Asynchronously compiles the component (optional).
 		/// </summary>
 		/// <returns>A task representing the asynchronous operation.</returns>
-		UniTask CompileAsync()
-			=> UniTask.CompletedTask;
+		internal UniTask<CompilationResult> CompileAsync(params object[] args)
+			=> UniTask.FromResult(Compile(args));
 	}
 }

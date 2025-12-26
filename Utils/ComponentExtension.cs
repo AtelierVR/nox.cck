@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityTransform = UnityEngine.Transform;
-using NoxTransform = Nox.CCK.Utils.Transform;
 using Object = UnityEngine.Object;
 
 namespace Nox.CCK.Utils {
@@ -132,7 +131,7 @@ namespace Nox.CCK.Utils {
 				select child.GetByPath(path.Skip(1).ToArray())).FirstOrDefault();
 		}
 
-		public static void Move(this UnityTransform transform, NoxTransform move, float threshold = float.Epsilon) {
+		public static void Move(this UnityTransform transform, TransformObject move, float threshold = float.Epsilon) {
 			if (!transform || move == null) return;
 
 			if (!move.IsSamePosition(transform.position, threshold))
