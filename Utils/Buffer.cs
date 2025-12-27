@@ -3,31 +3,31 @@ using UnityEngine;
 
 namespace Nox.CCK.Utils {
 	public class Buffer {
-		public byte[] data;
-		public ushort offset;
-		public ushort length;
+		public byte[] Data;
+		public ushort Offset;
+		public ushort Length;
 
 		public int Remaining
-			=> length - offset;
+			=> Length - Offset;
 
 		public Buffer(ushort offset = 0) {
 			Clear();
-			this.offset = offset;
-			length      = offset;
+			Offset = offset;
+			Length = offset;
 		}
 
 		public bool Write(byte value) {
-			if (offset + 1 > data.Length) return false;
-			data[offset++] = value;
-			if (offset > length) length = offset;
+			if (Offset + 1 > Data.Length) return false;
+			Data[Offset++] = value;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
 		public bool Write(short value) {
-			if (offset + 2 > data.Length) return false;
-			data[offset++] = (byte)(value >> 8);
-			data[offset++] = (byte)value;
-			if (offset > length) length = offset;
+			if (Offset + 2 > Data.Length) return false;
+			Data[Offset++] = (byte)(value >> 8);
+			Data[Offset++] = (byte)value;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
@@ -35,11 +35,11 @@ namespace Nox.CCK.Utils {
 			=> Write((short)value);
 
 		public bool Write(string value) {
-			if (offset + value.Length + 2 > data.Length) return false;
+			if (Offset + value.Length + 2 > Data.Length) return false;
 			if (!Write((ushort)value.Length)) return false;
 			foreach (var c in value)
-				data[offset++] = (byte)c;
-			if (offset > length) length = offset;
+				Data[Offset++] = (byte)c;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
@@ -47,12 +47,12 @@ namespace Nox.CCK.Utils {
 			=> Write(value.ToUnixTimeMilliseconds());
 
 		public bool Write(int value) {
-			if (offset + 4 > data.Length) return false;
-			data[offset++] = (byte)(value >> 24);
-			data[offset++] = (byte)(value >> 16);
-			data[offset++] = (byte)(value >> 8);
-			data[offset++] = (byte)value;
-			if (offset > length) length = offset;
+			if (Offset + 4 > Data.Length) return false;
+			Data[Offset++] = (byte)(value >> 24);
+			Data[Offset++] = (byte)(value >> 16);
+			Data[Offset++] = (byte)(value >> 8);
+			Data[Offset++] = (byte)value;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
@@ -60,16 +60,16 @@ namespace Nox.CCK.Utils {
 			=> Write((int)value);
 
 		public bool Write(long value) {
-			if (offset + 8 > data.Length) return false;
-			data[offset++] = (byte)(value >> 56);
-			data[offset++] = (byte)(value >> 48);
-			data[offset++] = (byte)(value >> 40);
-			data[offset++] = (byte)(value >> 32);
-			data[offset++] = (byte)(value >> 24);
-			data[offset++] = (byte)(value >> 16);
-			data[offset++] = (byte)(value >> 8);
-			data[offset++] = (byte)value;
-			if (offset > length) length = offset;
+			if (Offset + 8 > Data.Length) return false;
+			Data[Offset++] = (byte)(value >> 56);
+			Data[Offset++] = (byte)(value >> 48);
+			Data[Offset++] = (byte)(value >> 40);
+			Data[Offset++] = (byte)(value >> 32);
+			Data[Offset++] = (byte)(value >> 24);
+			Data[Offset++] = (byte)(value >> 16);
+			Data[Offset++] = (byte)(value >> 8);
+			Data[Offset++] = (byte)value;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
@@ -77,92 +77,95 @@ namespace Nox.CCK.Utils {
 			=> Write((long)value);
 
 		public bool Write(float value) {
-			if (offset + 4 > data.Length) return false;
+			if (Offset + 4 > Data.Length) return false;
 			var bytes = BitConverter.GetBytes(value);
 			if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
 			foreach (var b in bytes)
-				data[offset++] = b;
-			if (offset > length) length = offset;
+				Data[Offset++] = b;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
 
 		public bool Write(double value) {
-			if (offset + 8 > data.Length) return false;
+			if (Offset + 8 > Data.Length) return false;
 			var bytes = BitConverter.GetBytes(value);
 			if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
 			foreach (var b in bytes)
-				data[offset++] = b;
-			if (offset > length) length = offset;
+				Data[Offset++] = b;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
 		public bool Write(Vector3 value) {
-			if (offset + 12 > data.Length) return false;
+			if (Offset + 12 > Data.Length) return false;
 			if (!Write(value.x)) return false;
 			if (!Write(value.y)) return false;
 			if (!Write(value.z)) return false;
-			if (offset > length) length = offset;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
 		public bool Write(Quaternion value) {
-			if (offset + 16 > data.Length) return false;
+			if (Offset + 16 > Data.Length) return false;
 			if (!Write(value.x)) return false;
 			if (!Write(value.y)) return false;
 			if (!Write(value.z)) return false;
 			if (!Write(value.w)) return false;
-			if (offset > length) length = offset;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
 		public bool Write(byte[] value) {
-			if (offset + value.Length > data.Length) return false;
+			if (Offset + value.Length > Data.Length) return false;
 			foreach (var b in value)
-				data[offset++] = b;
-			if (offset > length) length = offset;
+				Data[Offset++] = b;
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
 		public byte[] ToBuffer() {
-			var buffer = new byte[length];
-			Array.Copy(data, buffer, length);
+			var buffer = new byte[Length];
+			Array.Copy(Data, buffer, Length);
 			return buffer;
 		}
 
-		public void Goto(ushort pos)
-			=> offset = pos;
+		public void Seek(ushort pos)
+			=> Offset = pos;
 
-		public void GotoEnd()
-			=> offset = length;
+		public void End()
+			=> Offset = Length;
 
-		public void Skip(short move)
-			=> offset = (ushort)(offset + move);
+		public void Start()
+			=> Offset = 0;
+
+		public void Move(short move)
+			=> Offset = (ushort)(Offset + move);
 
 		public override string ToString() {
-			var res = $"{GetType().Name}[(offset={offset}, length={length})";
-			for (var i = 0; i < length; i++)
-				res += " " + data[i].ToString("X2");
+			var res = $"{GetType().Name}[(offset={Offset}, length={Length})";
+			for (var i = 0; i < Length; i++)
+				res += " " + Data[i].ToString("X2");
 			return res + "]";
 		}
 
 		public byte ReadByte() {
-			if (offset + 1 > length) return 0;
-			return data[offset++];
+			if (Offset + 1 > Length) return 0;
+			return Data[Offset++];
 		}
 
 		public ushort ReadUShort() {
-			if (offset + 2 > length) return 0;
-			var value = (ushort)(data[offset++] << 8);
-			value |= data[offset++];
+			if (Offset + 2 > Length) return 0;
+			var value = (ushort)(Data[Offset++] << 8);
+			value |= Data[Offset++];
 			return value;
 		}
 
 		public string ReadString() {
 			var length = ReadUShort();
-			if (offset + length > this.length) return string.Empty;
-			var value = System.Text.Encoding.UTF8.GetString(data, offset, length);
-			offset += length;
+			if (Offset + length > this.Length) return string.Empty;
+			var value = System.Text.Encoding.UTF8.GetString(Data, Offset, length);
+			Offset += length;
 			return value;
 		}
 
@@ -172,47 +175,47 @@ namespace Nox.CCK.Utils {
 		}
 
 		public int ReadInt() {
-			if (offset + 4 > length) return 0;
-			var value = data[offset++] << 24;
-			value |= data[offset++] << 16;
-			value |= data[offset++] << 8;
-			value |= data[offset++];
+			if (Offset + 4 > Length) return 0;
+			var value = Data[Offset++] << 24;
+			value |= Data[Offset++] << 16;
+			value |= Data[Offset++] << 8;
+			value |= Data[Offset++];
 			return value;
 		}
 
 		public long ReadLong() {
-			if (offset + 8 > length) return 0;
-			var value = (long)data[offset++] << 56;
-			value |= (long)data[offset++] << 48;
-			value |= (long)data[offset++] << 40;
-			value |= (long)data[offset++] << 32;
-			value |= (long)data[offset++] << 24;
-			value |= (long)data[offset++] << 16;
-			value |= (long)data[offset++] << 8;
-			value |= data[offset++];
+			if (Offset + 8 > Length) return 0;
+			var value = (long)Data[Offset++] << 56;
+			value |= (long)Data[Offset++] << 48;
+			value |= (long)Data[Offset++] << 40;
+			value |= (long)Data[Offset++] << 32;
+			value |= (long)Data[Offset++] << 24;
+			value |= (long)Data[Offset++] << 16;
+			value |= (long)Data[Offset++] << 8;
+			value |= Data[Offset++];
 			return value;
 		}
 
 		public float ReadFloat() {
-			if (offset + 4 > length) return 0;
+			if (Offset + 4 > Length) return 0;
 			var bytes = new byte[4];
 			for (var i = 0; i < 4; i++)
-				bytes[i] = data[offset++];
+				bytes[i] = Data[Offset++];
 			if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
 			return BitConverter.ToSingle(bytes, 0);
 		}
 
 		public double ReadDouble() {
-			if (offset + 8 > length) return 0;
+			if (Offset + 8 > Length) return 0;
 			var bytes = new byte[8];
 			for (var i = 0; i < 8; i++)
-				bytes[i] = data[offset++];
+				bytes[i] = Data[Offset++];
 			if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
 			return BitConverter.ToDouble(bytes, 0);
 		}
 
 		public Vector3 ReadVector3() {
-			if (offset + 12 > length) return Vector3.zero;
+			if (Offset + 12 > Length) return Vector3.zero;
 			var x = ReadFloat();
 			var y = ReadFloat();
 			var z = ReadFloat();
@@ -220,7 +223,7 @@ namespace Nox.CCK.Utils {
 		}
 
 		public Quaternion ReadQuaternion() {
-			if (offset + 16 > length) return Quaternion.identity;
+			if (Offset + 16 > Length) return Quaternion.identity;
 			var x = ReadFloat();
 			var y = ReadFloat();
 			var z = ReadFloat();
@@ -229,10 +232,10 @@ namespace Nox.CCK.Utils {
 		}
 
 		public byte[] ReadBytes(ushort length) {
-			if (offset + length > this.length) return Array.Empty<byte>();
+			if (Offset + length > this.Length) return Array.Empty<byte>();
 			var value = new byte[length];
 			for (var i = 0; i < length; i++)
-				value[i] = data[offset++];
+				value[i] = Data[Offset++];
 			return value;
 		}
 
@@ -240,25 +243,25 @@ namespace Nox.CCK.Utils {
 			=> (uint)ReadInt();
 
 		public Buffer Clone(ushort start = 0, ushort end = 0) {
-			if (end == 0) end = length;
+			if (end == 0) end = Length;
 			var buffer        = new Buffer();
 			for (var i = start; i < end; i++)
-				buffer.Write(data[i]);
-			buffer.Goto(0);
+				buffer.Write(Data[i]);
+			buffer.Start();
 			return buffer;
 		}
 
 		public void Clear() {
-			offset = 0;
-			length = 0;
-			data   = new byte[1024];
+			Offset = 0;
+			Length = 0;
+			Data   = new byte[1024];
 		}
 
 		public bool Write(Buffer buffer) {
-			if (offset + buffer.length > data.Length) return false;
-			for (var i = 0; i < buffer.length; i++)
-				data[offset++] = buffer.data[i];
-			if (offset > length) length = offset;
+			if (Offset + buffer.Length > Data.Length) return false;
+			for (var i = 0; i < buffer.Length; i++)
+				Data[Offset++] = buffer.Data[i];
+			if (Offset > Length) Length = Offset;
 			return true;
 		}
 
@@ -276,6 +279,16 @@ namespace Nox.CCK.Utils {
 			if (type == typeof(ushort)) return Write(Convert.ToUInt16(value));
 			if (type == typeof(uint)) return Write(Convert.ToUInt32(value));
 			return false;
+		}
+
+		public void Compact() {
+			if (Offset == 0) return;
+			var newLength = Length - Offset;
+			var newData   = new byte[Data.Length];
+			Array.Copy(Data, Offset, newData, 0, newLength);
+			Data   = newData;
+			Length = (ushort)newLength;
+			Offset = 0;
 		}
 	}
 }

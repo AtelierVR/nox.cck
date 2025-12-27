@@ -2,6 +2,7 @@ using ULogger = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 using System.IO;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -14,7 +15,10 @@ using UnityEditor;
 
 namespace Nox.CCK.Utils {
 	public class Logger : ILogger {
-		public const long MaxLogSize = 1024 * 1024 * 10; // 10 MB
+		public static List<LogEntry> History = new();
+
+		public const int  MaxLogLines = 1000;
+		public const long MaxLogSize  = 1024 * 1024 * 10; // 10 MB
 
 		public static string LogDir
 			=> Path.Combine(Constants.AppPath, "logs");
@@ -292,13 +296,12 @@ namespace Nox.CCK.Utils {
 
 		// ReSharper disable Unity.PerformanceAnalysis
 		public static void Print(LogType type, object message, Object context = null, string tag = null) {
-			
 			message ??= "<null>";
 			OnLog.Invoke(type, tag, message.ToString(), context);
-			
+
 			if (type == LogType.Debug && !Config.Load().Get("debug.logging", Application.isEditor))
 				return;
-			
+
 			try {
 				// Capture stack trace synchronously on the calling thread
 				var stackTrace = new System.Diagnostics.StackTrace(2, true);
@@ -427,5 +430,13 @@ namespace Nox.CCK.Utils {
 		#if UNITY_EDITOR
 		Editor,
 		#endif
+	}
+
+	public class LogEntry {
+		public LogType  Type;
+		public string   Tag;
+		public string   Message;
+		public Object   Context;
+		public DateTime Timestamp;
 	}
 }
