@@ -124,7 +124,7 @@ namespace Nox.CCK.Utils {
 			return true;
 		}
 
-		public byte[] ToBuffer() {
+		public byte[] ToArray() {
 			var buffer = new byte[Length];
 			Array.Copy(Data, buffer, Length);
 			return buffer;

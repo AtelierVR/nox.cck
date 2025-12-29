@@ -737,6 +737,18 @@ namespace Nox.CCK.Network {
 		public static int Hash(this string s)
 			=> Utils.Hash.CRC32(s);
 
+		public static string ToBase64(this byte[] data)
+			=> Convert.ToBase64String(data);
+
+		public static byte[] FromBase64(this string base64)
+			=> Convert.FromBase64String(base64);
+
+		public static byte[] ToUTF8Bytes(this string str)
+			=> Encoding.UTF8.GetBytes(str);
+
+		public static string FromUTF8Bytes(this byte[] data)
+			=> Encoding.UTF8.GetString(data);
+
 		public static bool ToBool(this object value)
 			=> value switch {
 				bool b    => b,
@@ -946,7 +958,7 @@ namespace Nox.CCK.Network {
 				),
 				_ => Quaternion.identity
 			};
-		
+
 		public static byte[] FromVector3(Vector3 v) {
 			return CombineBytes(
 				ToBigEndian(v.x),
@@ -954,7 +966,7 @@ namespace Nox.CCK.Network {
 				ToBigEndian(v.z)
 			);
 		}
-		
+
 
 		public static byte[] FromQuaternion(Quaternion q) {
 			return CombineBytes(

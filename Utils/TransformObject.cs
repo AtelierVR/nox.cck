@@ -124,7 +124,7 @@ namespace Nox.CCK.Utils {
 		/// Set the angular velocity of the transform.
 		/// </summary>
 		/// <param name="value">Vector3 of the new angular velocity</param>
-		public void SetAngularVelocity(Vector3 value) {
+		public void SetAngular(Vector3 value) {
 			_angularVelocity =  value;
 			_flags           |= TransformFlags.AngularVelocity;
 		}
@@ -151,7 +151,7 @@ namespace Nox.CCK.Utils {
 			SetScale(transform.localScale);
 			if (!rigidbody) return;
 			SetVelocity(rigidbody.linearVelocity);
-			SetAngularVelocity(rigidbody.angularVelocity);
+			SetAngular(rigidbody.angularVelocity);
 		}
 
 		/// <summary>

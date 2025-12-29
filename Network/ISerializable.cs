@@ -10,7 +10,6 @@ namespace Nox.CCK.Network {
 		/// Deserialize the object from a byte array.
 		/// </summary>
 		/// <param name="data"></param>
-		/// <param name="dirty"></param>
-		public void Deserialize(byte[] data, DirtyBy dirty);
+		public void Deserialize(byte[] data);
 	}
 }
