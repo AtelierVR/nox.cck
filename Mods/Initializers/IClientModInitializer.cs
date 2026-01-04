@@ -35,13 +35,13 @@ namespace Nox.CCK.Mods.Initializers {
 		/// <summary>
 		/// Called every frame to update the mod on the client.
 		/// </summary>
-		public void OnUpdateClient()      { }
-		
+		public void OnUpdateClient() { }
+
 		/// <summary>
 		/// Called every frame after all Update methods have been called on the client.
 		/// </summary>
-		public void OnLateUpdateClient()  { }
-		
+		public void OnLateUpdateClient() { }
+
 		/// <summary>
 		/// Called at a fixed time interval for physics updates on the client.
 		/// </summary>
