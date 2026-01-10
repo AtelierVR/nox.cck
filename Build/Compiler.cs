@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Nox.CCK.Utils;
+using Object = UnityEngine.Object;
 
 namespace Nox.CCK.Build {
 	public class Compiler {
@@ -36,6 +37,7 @@ namespace Nox.CCK.Build {
 
 						switch (await compilable.CompileAsync(_contexts)) {
 							case CompilationResult.Failed:
+								Logger.LogWarning($"Compilation failed for {compilable.GetType().Name}", compilable as Object, tag: nameof(Compiler));
 								return false;
 							case CompilationResult.NeedRepass:
 								need.Add(compilable);
