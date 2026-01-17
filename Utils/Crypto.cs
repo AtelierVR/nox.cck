@@ -53,8 +53,8 @@ namespace Nox.CCK.Utils {
 				new Org.BouncyCastle.Math.BigInteger(1, parameters.InverseQ)
 			);
 
-			using var writer    = new StringWriter();
-			var       pemWriter = new PemWriter(writer);
+			using var writer = new StringWriter();
+			var pemWriter = new PemWriter(writer);
 			pemWriter.WriteObject(rsaPrivateKey);
 			return writer.ToString();
 		}
@@ -70,8 +70,8 @@ namespace Nox.CCK.Utils {
 				new Org.BouncyCastle.Math.BigInteger(1, parameters.Exponent)
 			);
 
-			using var writer    = new StringWriter();
-			var       pemWriter = new PemWriter(writer);
+			using var writer = new StringWriter();
+			var pemWriter = new PemWriter(writer);
 			pemWriter.WriteObject(rsaPublicKey);
 			return writer.ToString();
 		}
@@ -81,7 +81,7 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		public static void SaveKeysToPem(RSA rsa) {
 			var privateKeyPem = ExportPrivateKeyToPem(rsa);
-			var publicKeyPem  = ExportPublicKeyToPem(rsa);
+			var publicKeyPem = ExportPublicKeyToPem(rsa);
 
 			File.WriteAllText(PrivateKeyPemPath, privateKeyPem);
 			File.WriteAllText(PublicKeyPemPath, publicKeyPem);
@@ -94,21 +94,21 @@ namespace Nox.CCK.Utils {
 			if (!File.Exists(pemPath))
 				throw new FileNotFoundException($"Le fichier PEM {pemPath} n'existe pas");
 
-			var       pemContent = File.ReadAllText(pemPath);
-			using var reader     = new StringReader(pemContent);
-			var       pemReader  = new PemReader(reader);
-			var       keyPair    = (AsymmetricCipherKeyPair)pemReader.ReadObject();
-			var       privateKey = (RsaPrivateCrtKeyParameters)keyPair.Private;
+			var pemContent = File.ReadAllText(pemPath);
+			using var reader = new StringReader(pemContent);
+			var pemReader = new PemReader(reader);
+			var keyPair = (AsymmetricCipherKeyPair)pemReader.ReadObject();
+			var privateKey = (RsaPrivateCrtKeyParameters)keyPair.Private;
 
 			var rsa = RSA.Create();
 			var parameters = new RSAParameters {
-				Modulus  = privateKey.Modulus.ToByteArrayUnsigned(),
+				Modulus = privateKey.Modulus.ToByteArrayUnsigned(),
 				Exponent = privateKey.PublicExponent.ToByteArrayUnsigned(),
-				D        = privateKey.Exponent.ToByteArrayUnsigned(),
-				P        = privateKey.P.ToByteArrayUnsigned(),
-				Q        = privateKey.Q.ToByteArrayUnsigned(),
-				DP       = privateKey.DP.ToByteArrayUnsigned(),
-				DQ       = privateKey.DQ.ToByteArrayUnsigned(),
+				D = privateKey.Exponent.ToByteArrayUnsigned(),
+				P = privateKey.P.ToByteArrayUnsigned(),
+				Q = privateKey.Q.ToByteArrayUnsigned(),
+				DP = privateKey.DP.ToByteArrayUnsigned(),
+				DQ = privateKey.DQ.ToByteArrayUnsigned(),
 				InverseQ = privateKey.QInv.ToByteArrayUnsigned()
 			};
 			rsa.ImportParameters(parameters);
@@ -122,14 +122,14 @@ namespace Nox.CCK.Utils {
 			if (!File.Exists(pemPath))
 				throw new FileNotFoundException($"Le fichier PEM {pemPath} n'existe pas");
 
-			var       pemContent = File.ReadAllText(pemPath);
-			using var reader     = new StringReader(pemContent);
-			var       pemReader  = new PemReader(reader);
-			var       publicKey  = (RsaKeyParameters)pemReader.ReadObject();
+			var pemContent = File.ReadAllText(pemPath);
+			using var reader = new StringReader(pemContent);
+			var pemReader = new PemReader(reader);
+			var publicKey = (RsaKeyParameters)pemReader.ReadObject();
 
 			var rsa = RSA.Create();
 			var parameters = new RSAParameters {
-				Modulus  = publicKey.Modulus.ToByteArrayUnsigned(),
+				Modulus = publicKey.Modulus.ToByteArrayUnsigned(),
 				Exponent = publicKey.Exponent.ToByteArrayUnsigned()
 			};
 			rsa.ImportParameters(parameters);
@@ -186,11 +186,11 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		public static RSA ImportPublicKeyFromDer(byte[] derData) {
 			var publicKeyInfo = SubjectPublicKeyInfo.GetInstance(derData);
-			var rsaPublicKey  = (RsaKeyParameters)PublicKeyFactory.CreateKey(publicKeyInfo);
+			var rsaPublicKey = (RsaKeyParameters)PublicKeyFactory.CreateKey(publicKeyInfo);
 
 			var rsa = RSA.Create();
 			var parameters = new RSAParameters {
-				Modulus  = rsaPublicKey.Modulus.ToByteArrayUnsigned(),
+				Modulus = rsaPublicKey.Modulus.ToByteArrayUnsigned(),
 				Exponent = rsaPublicKey.Exponent.ToByteArrayUnsigned()
 			};
 			rsa.ImportParameters(parameters);
