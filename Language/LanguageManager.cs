@@ -69,7 +69,7 @@ namespace Nox.CCK.Language {
 					var pack = UnityEditor.AssetDatabase.LoadAssetAtPath<LanguagePack>(path);
 					if (pack) packs.Add(pack);
 				} catch (Exception e) {
-					Logger.LogException(e);
+					Logger.LogError(e);
 				}
 
 			var value = GetInPacks(language, key, packs);
@@ -98,7 +98,7 @@ namespace Nox.CCK.Language {
 			try {
 				return string.Format(value, args);
 			} catch (Exception e) {
-				Logger.LogException(e);
+				Logger.LogError(e);
 			}
 
 			return value;

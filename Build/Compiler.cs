@@ -56,7 +56,7 @@ namespace Nox.CCK.Build {
 					await UniTask.Yield();
 				}
 			} catch (Exception e) {
-				Logger.LogException(new Exception("Compilation exception", e));
+				Logger.LogError(new Exception("Compilation exception", e));
 				return false;
 			}
 

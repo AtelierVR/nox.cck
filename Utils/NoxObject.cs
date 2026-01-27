@@ -47,7 +47,7 @@ namespace Nox.CCK.Utils {
 				return (bool)isCompletedProperty.GetValue(awaiter)!;
 			} catch (Exception e) {
 				Logger.LogError($"Error checking awaiter: {e?.Message}");
-				Logger.LogException(e);
+				Logger.LogError(e);
 				return false;
 			} catch {
 				Logger.LogError("Unknown error checking awaiter.");
@@ -113,7 +113,7 @@ namespace Nox.CCK.Utils {
 				return default;
 			} catch (Exception e) {
 				Logger.LogError($"Error invoking method (ASYNC CALL) {method} in {type}: {e.Message}");
-				Logger.LogException(e);
+				Logger.LogError(e);
 				return default;
 			}
 		}
@@ -160,7 +160,7 @@ namespace Nox.CCK.Utils {
 				}
 			} catch (Exception e) {
 				Logger.LogError($"Error invoking method (CALL) {method} in {type}: {e.Message}");
-				Logger.LogException(e);
+				Logger.LogError(e);
 				return default;
 			}
 		}
@@ -206,7 +206,7 @@ namespace Nox.CCK.Utils {
 				return default;
 			} catch (Exception e) {
 				Logger.LogError($"Error getting field (GET) {field} in {GetType()}: {e.Message}");
-				Logger.LogException(e);
+				Logger.LogError(e);
 				return default;
 			}
 		}
@@ -256,7 +256,7 @@ namespace Nox.CCK.Utils {
 				return true;
 			} catch (Exception e) {
 				Logger.LogError($"Error checking method (HAS) {method} in {GetType()}: {e.Message}");
-				Logger.LogException(e);
+				Logger.LogError(e);
 				return false;
 			}
 		}
@@ -284,7 +284,7 @@ namespace Nox.CCK.Utils {
 				return true;
 			} catch (Exception e) {
 				Logger.LogError($"Error checking field (HAS) {field} in {GetType()}: {e.Message}");
-				Logger.LogException(e);
+				Logger.LogError(e);
 				return false;
 			}
 		}

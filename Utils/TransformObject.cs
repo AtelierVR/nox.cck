@@ -117,7 +117,7 @@ namespace Nox.CCK.Utils {
 		/// Get the angular velocity of the transform.
 		/// </summary>
 		/// <returns></returns>
-		public Vector3 GetAngularVelocity()
+		public Vector3 GetAngular()
 			=> _flags.HasFlag(TransformFlags.AngularVelocity) ? _angularVelocity : Vector3.zero;
 
 		/// <summary>
@@ -184,7 +184,7 @@ namespace Nox.CCK.Utils {
 			=> _flags.HasFlag(TransformFlags.AngularVelocity) && Vector3.Distance(_angularVelocity, value) < threshold;
 
 		public override string ToString()
-			=> $"{GetType().Name}[Flags={_flags}, Position={GetPosition()}, Rotation={GetRotation()}, Scale={GetScale()}, Velocity={GetVelocity()}, AngularVelocity={GetAngularVelocity()}]";
+			=> $"{GetType().Name}[Flags={_flags}, Position={GetPosition()}, Rotation={GetRotation()}, Scale={GetScale()}, Velocity={GetVelocity()}, AngularVelocity={GetAngular()}]";
 	}
 
 	[System.Flags]
