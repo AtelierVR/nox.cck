@@ -5,16 +5,19 @@ using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Nox.CCK.Utils;
+using UnityEngine.Events;
 using Object = UnityEngine.Object;
 
 namespace Nox.CCK.Build {
 	public class Compiler {
 		private readonly ICompilable[] _compilables;
-		private readonly object[]    _contexts;
+		private readonly object[] _contexts;
+
+		public readonly UnityEvent<ICompilable, int, int> OnCompilableCompiled = new();
 
 		public Compiler(IEnumerable<ICompilable> compilables, params object[] contexts) {
 			_compilables = compilables.ToArray();
-			_contexts    = contexts;
+			_contexts = contexts;
 		}
 
 		public ICompilable[] GetCompilables()
@@ -31,7 +34,9 @@ namespace Nox.CCK.Build {
 			try {
 				while (true) {
 					List<ICompilable> need = new();
-					foreach (var compilable in a) {
+					for (var i = 0; i < a.Length; i++) {
+						var compilable = a[i];
+
 						if (cancellationToken.IsCancellationRequested)
 							return false;
 
@@ -47,6 +52,8 @@ namespace Nox.CCK.Build {
 							default:
 								throw new ArgumentOutOfRangeException();
 						}
+
+						OnCompilableCompiled.Invoke(compilable, i, a.Length);
 					}
 
 					if (need.Count == 0)

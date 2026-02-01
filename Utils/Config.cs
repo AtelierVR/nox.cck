@@ -1,4 +1,5 @@
 using System.IO;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace Nox.CCK.Utils {
 		public static Config Current;
 
 		private JObject _jsonObject = new();
-		private string  _path;
+		private string _path;
 
 
 		public static Config Load(bool force = false) {
@@ -18,7 +19,7 @@ namespace Nox.CCK.Utils {
 			if (!File.Exists(GetPath()))
 				return new Config { _path = GetPath() }.Save();
 			var jsonString = File.ReadAllText(GetPath());
-			var config     = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetPath() };
+			var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetPath() };
 			Current = config;
 			return config;
 		}
@@ -34,7 +35,7 @@ namespace Nox.CCK.Utils {
 			if (!File.Exists(GetEditorPath()))
 				return new Config { _path = GetEditorPath() }.Save();
 			var jsonString = File.ReadAllText(GetEditorPath());
-			var config     = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetEditorPath() };
+			var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetEditorPath() };
 			CurrentEditor = config;
 			return config;
 		}
@@ -74,28 +75,32 @@ namespace Nox.CCK.Utils {
 			=> Has(propertyName.Split('.'));
 
 		public bool Has(string[] propertyPathName) {
-			var current = _jsonObject;
-			for (var i = 0; i < propertyPathName.Length - 1; i++) {
-				if (current[propertyPathName[i]] == null)
+			JToken current = _jsonObject;
+			
+			for (var i = 0; i < propertyPathName.Length; i++) {
+				if (current is not { Type: JTokenType.Object })
 					return false;
-				current = (JObject)current[propertyPathName[i]];
+				current = current[propertyPathName[i]];
+				if (current == null)
+					return false;
 			}
-
-			return current[propertyPathName[^1]] != null;
+			
+			return true;
 		}
 
 		public JToken Get(string propertyName)
 			=> Get(propertyName.Split('.'));
 
 		public JToken Get(string[] propertyPathName) {
-			var current = _jsonObject;
+			JToken current = _jsonObject;
+			
 			for (var i = 0; i < propertyPathName.Length - 1; i++) {
-				if (current[propertyPathName[i]] == null)
+				if (current is not { Type: JTokenType.Object })
 					return null;
-				current = (JObject)current[propertyPathName[i]];
+				current = current[propertyPathName[i]];
 			}
-
-			return current[propertyPathName[^1]];
+			
+			return current?[propertyPathName[^1]];
 		}
 
 		public JObject Get()
@@ -115,9 +120,14 @@ namespace Nox.CCK.Utils {
 		public void Set<T>(string[] propertyPathName, T value) {
 			var current = _jsonObject;
 			for (var i = 0; i < propertyPathName.Length - 1; i++) {
-				if (current[propertyPathName[i]] == null)
-					current[propertyPathName[i]] = new JObject();
-				current = (JObject)current[propertyPathName[i]];
+				// Ensure the intermediate node is an object. If it doesn't exist or isn't an object, replace it with a new JObject.
+				var child = current[propertyPathName[i]];
+				if (child == null || child.Type != JTokenType.Object) {
+					var obj = new JObject();
+					current[propertyPathName[i]] = obj;
+					current = obj;
+				}
+				else current = (JObject)child;
 			}
 
 			if (value == null)
@@ -131,16 +141,17 @@ namespace Nox.CCK.Utils {
 		public void Remove(string[] propertyPathName) {
 			var current = _jsonObject;
 			for (var i = 0; i < propertyPathName.Length - 1; i++) {
-				if (current[propertyPathName[i]] == null)
+				var child = current[propertyPathName[i]];
+				if (child is not { Type: JTokenType.Object })
 					return;
-				current = (JObject)current[propertyPathName[i]];
+				current = (JObject)child;
 			}
 
 			current.Remove(propertyPathName[^1]);
 		}
 
 		public Config Save() {
-			File.WriteAllText(_path, _jsonObject.ToString());
+			File.WriteAllText(_path, _jsonObject.ToString(Formatting.Indented));
 			return this;
 		}
 	}
