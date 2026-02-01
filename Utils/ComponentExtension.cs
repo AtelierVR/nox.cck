@@ -145,7 +145,7 @@ namespace Nox.CCK.Utils {
 
 			if (!move.IsSameVelocity(rb.linearVelocity, threshold))
 				rb.linearVelocity = move.GetVelocity();
-			if (!move.IsSameAngularVelocity(rb.angularVelocity, threshold))
+			if (!move.IsSameAngular(rb.angularVelocity, threshold))
 				rb.angularVelocity = move.GetAngular();
 		}
 

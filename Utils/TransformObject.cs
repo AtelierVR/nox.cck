@@ -118,7 +118,7 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		/// <returns></returns>
 		public Vector3 GetAngular()
-			=> _flags.HasFlag(TransformFlags.AngularVelocity) ? _angularVelocity : Vector3.zero;
+			=> _flags.HasFlag(TransformFlags.Angular) ? _angularVelocity : Vector3.zero;
 
 		/// <summary>
 		/// Set the angular velocity of the transform.
@@ -126,14 +126,14 @@ namespace Nox.CCK.Utils {
 		/// <param name="value">Vector3 of the new angular velocity</param>
 		public void SetAngular(Vector3 value) {
 			_angularVelocity =  value;
-			_flags           |= TransformFlags.AngularVelocity;
+			_flags           |= TransformFlags.Angular;
 		}
 
 		/// <summary>
 		/// Reset the angular velocity of the transform.
 		/// </summary>
 		public void ResetAngularVelocity()
-			=> _flags &= ~TransformFlags.AngularVelocity;
+			=> _flags &= ~TransformFlags.Angular;
 
 		/// <summary>
 		/// Create a new empty transform.
@@ -166,7 +166,7 @@ namespace Nox.CCK.Utils {
 				&& IsSameRotation(transform._rotation, threshold)
 				&& IsSameScale(transform._scale, threshold)
 				&& IsSameVelocity(transform._velocity, threshold)
-				&& IsSameAngularVelocity(transform._angularVelocity, threshold);
+				&& IsSameAngular(transform._angularVelocity, threshold);
 
 		public bool IsSameScale(Vector3 value, float threshold = DefaultThreshold)
 			=> _flags.HasFlag(TransformFlags.Scale) && Vector3.Distance(_scale, value) < threshold;
@@ -175,13 +175,13 @@ namespace Nox.CCK.Utils {
 			=> _flags.HasFlag(TransformFlags.Position) && Vector3.Distance(_position, value) < threshold;
 
 		public bool IsSameRotation(Quaternion value, float threshold = DefaultThreshold)
-			=> _flags.HasFlag(TransformFlags.Rotation) && Quaternion.Angle(_rotation, value) < threshold;
+			=> _flags.HasFlag(TransformFlags.Rotation) && Quaternion.Angle(_rotation, value) < threshold * 360f;
 
 		public bool IsSameVelocity(Vector3 value, float threshold = DefaultThreshold)
 			=> _flags.HasFlag(TransformFlags.Velocity) && Vector3.Distance(_velocity, value) < threshold;
 
-		public bool IsSameAngularVelocity(Vector3 value, float threshold = DefaultThreshold)
-			=> _flags.HasFlag(TransformFlags.AngularVelocity) && Vector3.Distance(_angularVelocity, value) < threshold;
+		public bool IsSameAngular(Vector3 value, float threshold = DefaultThreshold)
+			=> _flags.HasFlag(TransformFlags.Angular) && Vector3.Distance(_angularVelocity, value) < threshold;
 
 		public override string ToString()
 			=> $"{GetType().Name}[Flags={_flags}, Position={GetPosition()}, Rotation={GetRotation()}, Scale={GetScale()}, Velocity={GetVelocity()}, AngularVelocity={GetAngular()}]";
@@ -194,10 +194,10 @@ namespace Nox.CCK.Utils {
 		Rotation        = 1 << 1,
 		Scale           = 1 << 2,
 		Velocity        = 1 << 3,
-		AngularVelocity = 1 << 4,
+		Angular = 1 << 4,
 		Reset           = 1 << 5,
 		All             = Rigidbody | Transform,
-		Rigidbody       = Velocity  | AngularVelocity,
+		Rigidbody       = Velocity  | Angular,
 		Transform       = Position  | Rotation | Scale
 	}
 }
