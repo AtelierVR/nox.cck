@@ -15,7 +15,7 @@ using UnityEditor;
 
 namespace Nox.CCK.Utils {
 	public class Logger : ILogger {
-		public static List<LogEntry> History = new();
+		public static readonly List<LogEntry> History = new();
 
 		public const int MaxLogLines = 1000;
 		public const long MaxLogSize = 1024 * 1024 * 10; // 10 MB
@@ -30,6 +30,7 @@ namespace Nox.CCK.Utils {
 		public static bool IsInitialized { get; private set; } = false;
 
 		private static readonly object FileLock = new();
+
 
 		public ILogHandler logHandler { get; set; } = ULogger.unityLogger.logHandler;
 		public bool logEnabled { get; set; } = true;
@@ -50,14 +51,16 @@ namespace Nox.CCK.Utils {
 		private static void OpenLatestLog() {
 			if (File.Exists(LogFile))
 				EditorUtility.OpenWithDefaultApp(LogFile);
-			else OpenDialog("Nox Logger", "No log file found.", "OK");
+			else
+				OpenDialog("Nox Logger", "No log file found.", "OK");
 		}
 
 		[MenuItem("Nox/Logger/Reveal Latest Log")]
 		private static void RevealLatestLog() {
 			if (File.Exists(LogFile))
 				EditorUtility.RevealInFinder(LogFile);
-			else OpenDialog("Nox Logger", "No log file found.", "OK");
+			else
+				OpenDialog("Nox Logger", "No log file found.", "OK");
 		}
 
 		[MenuItem("Nox/Logger/Clear Logs")]
@@ -68,12 +71,22 @@ namespace Nox.CCK.Utils {
 			Init();
 		}
 
-		[MenuItem("Nox/Logger/Open Unity Log")]
+		[MenuItem("Nox/Logger/Open Editor Log")]
 		private static void OpenUnityLog() {
 			var logPath = Application.consoleLogPath;
 			if (File.Exists(logPath))
 				EditorUtility.OpenWithDefaultApp(logPath);
-			else OpenDialog("Nox Logger", "No Unity log file found.", "OK");
+			else
+				OpenDialog("Nox Logger", "No Unity log file found.", "OK");
+		}
+
+		[MenuItem("Nox/Logger/Open Runtime Log")]
+		private static void OpenRuntimeLog() {
+			var logPath = Application.persistentDataPath + "/Player.log";
+			if (File.Exists(logPath))
+				EditorUtility.OpenWithDefaultApp(logPath);
+			else
+				OpenDialog("Nox Logger", "No runtime log file found.", "OK");
 		}
 
 		/// <summary>
@@ -127,13 +140,12 @@ namespace Nox.CCK.Utils {
 					Directory.CreateDirectory(LogDir);
 
 				if (File.Exists(LogFile)) {
-					var creationTime = File.GetCreationTime(LogFile);
-					var i = 0;
+					var    creationTime = File.GetCreationTime(LogFile);
+					var    i            = 0;
 					string newFileName;
 					do {
 						newFileName = Path.Combine(LogDir, $"log_{creationTime:yyyy-MM-dd_HH-mm-ss}_{i++}.log");
-					}
-					while (File.Exists(newFileName));
+					} while (File.Exists(newFileName));
 
 					File.Move(LogFile, newFileName);
 				}
@@ -150,6 +162,8 @@ namespace Nox.CCK.Utils {
 			}
 		}
 
+		// == Log methods with various overloads for convenience ==
+
 		public static void Log(object message, string tag = null)
 			=> Print(LogType.Log, message, tag: tag);
 
@@ -159,8 +173,14 @@ namespace Nox.CCK.Utils {
 		public static void LogError(object message, string tag = null)
 			=> Print(LogType.Error, message, tag: tag);
 
+		public static void LogException(Exception exception, string tag = null)
+			=> Print(LogType.Exception, exception, tag: tag);
+
 		public static void LogDebug(object message, string tag = null)
 			=> Print(LogType.Debug, message, tag: tag);
+
+
+		// == Log methods with context ==
 
 		public static void Log(object message, Object context, string tag = null)
 			=> Print(LogType.Log, message, context, tag: tag);
@@ -169,94 +189,124 @@ namespace Nox.CCK.Utils {
 			=> Print(LogType.Warning, message, context, tag: tag);
 
 		public static void LogError(object message, Object context, string tag = null)
-			=> Print(LogType.Error, message, context, tag: tag);
+			=> Print(LogType.Exception, message, context, tag: tag);
 
-		public void LogException(Exception exception)
-			=> Print(LogType.Error, exception);
-		
+		public static void LogException(Exception exception, Object context, string tag = null)
+			=> Print(LogType.Exception, exception, context, tag);
+
 		public static void LogDebug(object message, Object context, string tag = null)
 			=> Print(LogType.Debug, message, context, tag: tag);
 
 		// ILogger interface methods
 		public void LogFormat(UnityEngine.LogType logType, string format, params object[] args) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			var message = string.Format(format, args);
 			Print(ConvertLogType(logType), message);
 		}
 
 		public void LogFormat(UnityEngine.LogType logType, Object context, string format, params object[] args) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			var message = string.Format(format, args);
 			Print(ConvertLogType(logType), message, context);
 		}
-		public void LogException(Exception exception, Object context)
-			=> Print(LogType.Error, exception, context);
 
 		public bool IsLogTypeAllowed(UnityEngine.LogType logType) {
-			if (!logEnabled) return false;
+			if (!logEnabled)
+				return false;
 			return (int)filterLogType >= (int)logType;
 		}
 
 		public void Log(UnityEngine.LogType logType, object message) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(ConvertLogType(logType), message);
 		}
 
 		public void Log(UnityEngine.LogType logType, object message, Object context) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(ConvertLogType(logType), message, context);
 		}
 
 		public void Log(UnityEngine.LogType logType, string tag, object message) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(ConvertLogType(logType), message, tag: tag);
 		}
 
 		public void Log(UnityEngine.LogType logType, string tag, object message, Object context) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(ConvertLogType(logType), message, context, tag: tag);
 		}
 
 		public void Log(object message) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(LogType.Log, message);
 		}
 
 		public void Log(string tag, object message) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(LogType.Log, message, tag: tag);
 		}
 
 		public void Log(string tag, object message, Object context) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(LogType.Log, message, context, tag: tag);
 		}
 
+
+
 		public void LogWarning(string tag, object message) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(LogType.Warning, message, tag: tag);
 		}
 
 		public void LogWarning(string tag, object message, Object context) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(LogType.Warning, message, context, tag: tag);
 		}
 
 		public void LogError(string tag, object message) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(LogType.Error, message, tag: tag);
 		}
 
 		public void LogError(string tag, object message, Object context) {
-			if (!logEnabled) return;
+			if (!logEnabled)
+				return;
 			Print(LogType.Error, message, context, tag: tag);
 		}
 
+		public void LogException(Exception exception, Object context) {
+			if (!logEnabled)
+				return;
+			Print(LogType.Exception, exception, context);
+		}
+
+		public void LogException(Exception exception) {
+			if (!logEnabled)
+				return;
+			Print(LogType.Exception, exception);
+		}
+
+
 		private static LogType ConvertLogType(UnityEngine.LogType type)
 			=> type switch {
-				UnityEngine.LogType.Error   => LogType.Error,
-				UnityEngine.LogType.Warning => LogType.Warning,
-				_                           => LogType.Log
+				UnityEngine.LogType.Log       => LogType.Log,
+				UnityEngine.LogType.Warning   => LogType.Warning,
+				UnityEngine.LogType.Assert    => LogType.Assert,
+				UnityEngine.LogType.Exception => LogType.Exception,
+				UnityEngine.LogType.Error     => LogType.Error,
+				_                             => LogType.Debug
 			};
 
 
@@ -291,43 +341,39 @@ namespace Nox.CCK.Utils {
 			try {
 				// Capture stack trace synchronously on the calling thread
 				var stackTrace = new System.Diagnostics.StackTrace(2, true);
-				var frames = stackTrace.GetFrames();
-				var timestamp = DateTime.Now;
-
+				var frames     = stackTrace.GetFrames();
+				var timestamp  = DateTime.Now;
 
 				// Write to file in a separate thread
 				ThreadPool.QueueUserWorkItem(
-					_ =>
-					{
+					_ => {
 						try {
-							var old = 0;
+							var old        = 0;
 							var methodName = "<UnknownMethod>";
-							var className = "<UnknownClass>";
+							var className  = "<UnknownClass>";
 
 							if (frames is { Length: > 0 }) {
 								methodName = frames[old].GetMethod().Name;
-								className = frames[old].GetMethod().DeclaringType?.Name ?? className;
+								className  = frames[old].GetMethod().DeclaringType?.Name ?? className;
 								while ((className.StartsWith("<") || IgnoreStack.Any(s => $"{className}.{methodName}".Contains(s))) && frames.Length > ++old) {
 									methodName = frames[old].GetMethod().Name;
-									className = frames[old].GetMethod().DeclaringType?.Name ?? className;
+									className  = frames[old].GetMethod().DeclaringType?.Name ?? className;
 								}
 							}
 
-							var logMessage = message.ToString();
+							var logMessage       = message.ToString();
 							var stackTraceString = stackTrace.ToString();
 
 							lock (FileLock) {
 								if (!IsInitialized) {
 									Init();
 									IsInitialized = true;
-								}
-								else if (!File.Exists(LogFile) || new FileInfo(LogFile).Length > MaxLogSize) {
+								} else if (!File.Exists(LogFile) || new FileInfo(LogFile).Length > MaxLogSize) {
 									Init();
 									// Note: Avoid recursive call here, just log directly
-									using (var fs = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-									using (var writer = new StreamWriter(fs)) {
-										writer.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [Log] [Logger.OnLog] Log file exceeded maximum size and was rotated.");
-									}
+									using var fs     = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+									using var writer = new StreamWriter(fs);
+									writer.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [Log] [Logger.OnLog] Log file exceeded maximum size and was rotated.");
 								}
 
 								using (var fs = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
@@ -349,10 +395,10 @@ namespace Nox.CCK.Utils {
 					History.RemoveAt(0);
 
 				var entry = new LogEntry {
-					Type = type,
-					Tag = tag,
-					Message = message.ToString(),
-					Context = context,
+					Type      = type,
+					Tag       = tag,
+					Message   = message.ToString(),
+					Context   = context,
 					Timestamp = timestamp
 				};
 				History.Add(entry);
@@ -360,14 +406,36 @@ namespace Nox.CCK.Utils {
 				var parsed = ParseToString(entry);
 
 				switch (type) {
-					case LogType.Log: ULogger.Log(parsed, context); break;
-					case LogType.Warning: ULogger.LogWarning(parsed, context); break;
-					case LogType.Error: ULogger.LogError(parsed, context); break;
-					case LogType.Debug: ULogger.Log(parsed, context); break;
+					case LogType.Log:
+						ULogger.Log(parsed, context);
+						break;
+					case LogType.Warning:
+						ULogger.LogWarning(parsed, context);
+						break;
+					case LogType.Error:
+						ULogger.LogError(parsed, context);
+						break;
+					case LogType.Debug:
+						ULogger.Log(parsed, context);
+						break;
 					#if UNITY_EDITOR
-					case LogType.Editor: ULogger.Log(parsed, context); break;
+					case LogType.Editor:
+						ULogger.Log(parsed, context);
+						break;
 					#endif
-					default: ULogger.Log(parsed, context); break;
+					case LogType.Assert:
+						ULogger.LogAssertion(parsed, context);
+						break;
+					case LogType.Exception:
+						ULogger.LogError(
+							message is Exception o
+								? new Exception(parsed, o)
+								: new Exception(parsed),
+							context);
+						break;
+					default:
+						ULogger.Log(parsed, context);
+						break;
 				}
 			} catch (Exception e) {
 				ULogger.LogException(e);
@@ -384,18 +452,20 @@ namespace Nox.CCK.Utils {
 				return 0xFFFFFF;
 
 			var hash = tag.GetHashCode();
-			var r = (hash & 0xFF0000) >> 16;
-			var g = (hash & 0x00FF00) >> 8;
-			var b = (hash & 0x0000FF);
+			var r    = (hash & 0xFF0000) >> 16;
+			var g    = (hash & 0x00FF00) >> 8;
+			var b    = (hash & 0x0000FF);
 			return (r << 16) | (g << 8) | b;
 		}
 
 		private static int ColorFromType(LogType type) {
 			return type switch {
-				LogType.Error   => 0xFF0000,
-				LogType.Warning => 0xFFFF00,
-				LogType.Log     => 0xFFFFFF,
-				LogType.Debug   => 0x00FFFF,
+				LogType.Error     => 0xFF0000,
+				LogType.Warning   => 0xFFFF00,
+				LogType.Log       => 0xFFFFFF,
+				LogType.Debug     => 0x00FFFF,
+				LogType.Assert    => 0xFF00FF,
+				LogType.Exception => 0xFF8000,
 				#if UNITY_EDITOR
 				LogType.Editor => 0x00FF00,
 				#endif
@@ -405,10 +475,12 @@ namespace Nox.CCK.Utils {
 	}
 
 	public enum LogType {
-		Error,
-		Warning,
-		Log,
 		Debug,
+		Log,
+		Warning,
+		Error,
+		Assert,
+		Exception,
 		#if UNITY_EDITOR
 		Editor,
 		#endif
