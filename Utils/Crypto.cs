@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
@@ -12,17 +13,19 @@ using Org.BouncyCastle.X509;
 
 namespace Nox.CCK.Utils {
 	public static class Crypto {
+		const int DefaultKeySize = 4096;
+		
 		public static string PrivateKeyPemPath
 			=> Path.Combine(Constants.AppPath, "private_key.pem");
 
 		public static string PublicKeyPemPath
 			=> Path.Combine(Constants.AppPath, "public_key.pem");
 
-		public static RSA GetKeys() {
+		public static RSA GetKeys(int keySize = DefaultKeySize) {
 			if (File.Exists(PrivateKeyPemPath))
 				return LoadPrivateKeyFromPem(PrivateKeyPemPath);
 
-			var rsa = GenerateKeys();
+			var rsa = GenerateKeys(keySize);
 			SaveKeysToPem(rsa);
 			return rsa;
 		}
@@ -34,8 +37,30 @@ namespace Nox.CCK.Utils {
 				File.Delete(PublicKeyPemPath);
 		}
 
-		public static RSA GenerateKeys()
-			=> RSA.Create(4096);
+		public static RSA GenerateKeys(int keySize = DefaultKeySize) {
+			if (keySize is < 2048 or > 8192)
+				throw new ArgumentOutOfRangeException(nameof(keySize), "La taille de la clé doit être comprise entre 2048 et 8192 bits.");
+
+			// On utilise BouncyCastle pour générer la clé afin d'éviter
+			// que Mono/Unity ignore la taille demandée (1024 bits par défaut).
+			var generator = new RsaKeyPairGenerator();
+			generator.Init(new KeyGenerationParameters(new SecureRandom(), keySize));
+			var keyPair = generator.GenerateKeyPair();
+			var privateKey = (RsaPrivateCrtKeyParameters)keyPair.Private;
+
+			var rsa = RSA.Create();
+			rsa.ImportParameters(new RSAParameters {
+				Modulus  = privateKey.Modulus.ToByteArrayUnsigned(),
+				Exponent = privateKey.PublicExponent.ToByteArrayUnsigned(),
+				D        = privateKey.Exponent.ToByteArrayUnsigned(),
+				P        = privateKey.P.ToByteArrayUnsigned(),
+				Q        = privateKey.Q.ToByteArrayUnsigned(),
+				DP       = privateKey.DP.ToByteArrayUnsigned(),
+				DQ       = privateKey.DQ.ToByteArrayUnsigned(),
+				InverseQ = privateKey.QInv.ToByteArrayUnsigned()
+			});
+			return rsa;
+		}
 
 		/// <summary>
 		/// Exporte la clé privée au format PEM
