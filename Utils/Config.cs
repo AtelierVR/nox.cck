@@ -5,8 +5,20 @@ using UnityEngine;
 
 namespace Nox.CCK.Utils {
 	public class Config {
-		public static string GetPath()
-			=> Path.Combine(Constants.AppPath, "config.json");
+		public static string GetPath() {
+			#if UNITY_EDITOR
+			var editorConfig = LoadEditor().Get<string>("global.config");
+			if (!string.IsNullOrEmpty(editorConfig))
+				return editorConfig;
+			#endif
+
+			var parsed = ArgsParser.Parse();
+			var configArg = parsed.Get("config");
+			if (!string.IsNullOrEmpty(configArg))
+				return configArg;
+
+			return Path.Combine(Constants.AppPath, "config.json");
+		}
 
 		public static Config Current;
 
