@@ -10,7 +10,7 @@ namespace Nox.CCK.Utils {
 	public static class ComponentExtension {
 		// ReSharper disable Unity.PerformanceAnalysis
 		public static T GetOrAddComponent<T>(this Component component) where T : Component
-			=> GetOrAddComponent<T>(component.gameObject);
+			=> component.gameObject.GetOrAddComponent<T>();
 
 		public static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component
 			=> gameObject.GetComponent<T>() ?? gameObject.AddComponent<T>();
@@ -19,7 +19,7 @@ namespace Nox.CCK.Utils {
 			=> gameObject && gameObject.activeInHierarchy;
 
 		public static bool IsActive(this Component component)
-			=> component && IsActive(component.gameObject);
+			=> component && component.gameObject.IsActive();
 
 		public static T GetComponentInParents<T>(this GameObject gameObject, bool includeInactive = false) {
 			var parent = gameObject.transform;
@@ -37,7 +37,7 @@ namespace Nox.CCK.Utils {
 
 		public static bool TryGetComponentInChildren<T>(out T component, bool includeInactive = true) {
 			for (var i = 0; i < SceneManager.sceneCount; i++)
-				if (TryGetComponentInChildren(SceneManager.GetSceneAt(i), out component, includeInactive))
+				if (SceneManager.GetSceneAt(i).TryGetComponentInChildren(out component, includeInactive))
 					return true;
 			component = default;
 			return false;
@@ -67,7 +67,7 @@ namespace Nox.CCK.Utils {
 				return true;
 
 			foreach (UnityTransform child in gameObject.transform)
-				if (TryGetComponentInChildren(child.gameObject, out component, includeInactive))
+				if (child.gameObject.TryGetComponentInChildren(out component, includeInactive))
 					return true;
 
 			component = default;
@@ -80,7 +80,7 @@ namespace Nox.CCK.Utils {
 				: default;
 
 		public static T GetComponentInChildren<T>(this Scene scene, bool includeInactive = true)
-			=> TryGetComponentInChildren(scene, out T component, includeInactive)
+			=> scene.TryGetComponentInChildren(out T component, includeInactive)
 				? component
 				: default;
 
@@ -88,19 +88,20 @@ namespace Nox.CCK.Utils {
 			=> gameObject.GetComponentsInChildren<T>(includeInactive);
 
 		public static T GetComponentInChildren<T>(this GameObject gameObject, bool includeInactive = true)
-			=> TryGetComponentInChildren(gameObject, out T component, includeInactive)
+			=> gameObject.TryGetComponentInChildren(out T component, includeInactive)
 				? component
 				: default;
 
 		public static T[] GetComponentsInChildren<T>(bool includeInactive = true) {
 			var components = new List<T>();
 			for (var i = 0; i < SceneManager.sceneCount; i++)
-				components.AddRange(GetComponentsInChildren<T>(SceneManager.GetSceneAt(i), includeInactive));
+				components.AddRange(SceneManager.GetSceneAt(i).GetComponentsInChildren<T>(includeInactive));
 			return components.ToArray();
 		}
 
 		public static T[] GetComponentsInChildren<T>(this Scene scene, bool includeInactive = true) {
-			if (!scene.isLoaded) return Array.Empty<T>();
+			if (!scene.isLoaded)
+				return Array.Empty<T>();
 			var components = new List<T>();
 			foreach (var go in scene.GetRootGameObjects())
 				components.AddRange(go.GetComponentsInChildren<T>(includeInactive));
@@ -132,7 +133,8 @@ namespace Nox.CCK.Utils {
 		}
 
 		public static void Move(this UnityTransform transform, TransformObject move, float threshold = float.Epsilon) {
-			if (!transform || move == null) return;
+			if (!transform || move == null)
+				return;
 
 			if (!move.IsSamePosition(transform.position, threshold))
 				transform.position = move.GetPosition();
@@ -141,7 +143,8 @@ namespace Nox.CCK.Utils {
 			if (!move.IsSameScale(transform.localScale, threshold))
 				transform.localScale = move.GetScale();
 
-			if (!transform.TryGetComponent<Rigidbody>(out var rb)) return;
+			if (!transform.TryGetComponent<Rigidbody>(out var rb))
+				return;
 
 			if (!move.IsSameVelocity(rb.linearVelocity, threshold))
 				rb.linearVelocity = move.GetVelocity();
@@ -151,8 +154,10 @@ namespace Nox.CCK.Utils {
 
 		public static void Destroy(this Object @object) {
 			#if UNITY_EDITOR
-			if (Application.isPlaying) Object.Destroy(@object);
-			else UnityEditor.EditorApplication.delayCall += () => Object.DestroyImmediate(@object);
+			if (Application.isPlaying)
+				Object.Destroy(@object);
+			else
+				UnityEditor.EditorApplication.delayCall += () => Object.DestroyImmediate(@object);
 			#else
 			Object.Destroy(@object);
 			#endif
@@ -160,8 +165,10 @@ namespace Nox.CCK.Utils {
 
 		public static void DestroyImmediate(this Object @object) {
 			#if UNITY_EDITOR
-			if (Application.isPlaying) Object.DestroyImmediate(@object);
-			else UnityEditor.EditorApplication.delayCall += () => Object.DestroyImmediate(@object);
+			if (Application.isPlaying)
+				Object.DestroyImmediate(@object);
+			else
+				UnityEditor.EditorApplication.delayCall += () => Object.DestroyImmediate(@object);
 			#else
 			Object.DestroyImmediate(@object);
 			#endif
@@ -171,8 +178,15 @@ namespace Nox.CCK.Utils {
 			if (parent.name.Equals(name, StringComparison.OrdinalIgnoreCase))
 				return parent;
 			return (from UnityTransform child in parent.transform
-				select Find(child.gameObject, name))
+					select child.gameObject.Find(name))
 				.FirstOrDefault(result => result);
+		}
+
+		public static bool DontDestroyOnLoad(this GameObject gameObject) {
+			if (!gameObject)
+				return false;
+			Object.DontDestroyOnLoad(gameObject);
+			return true;
 		}
 	}
 }
