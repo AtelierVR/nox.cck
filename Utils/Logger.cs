@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using ILogger = UnityEngine.ILogger;
@@ -345,52 +346,50 @@ namespace Nox.CCK.Utils {
 				var timestamp  = DateTime.Now;
 
 				// Write to file in a separate thread
-				ThreadPool.QueueUserWorkItem(
-					_ => {
-						try {
-							var old        = 0;
-							var methodName = "<UnknownMethod>";
-							var className  = "<UnknownClass>";
+				UniTask.Post(() => {
+					try {
+						var old        = 0;
+						var methodName = "<UnknownMethod>";
+						var className  = "<UnknownClass>";
 
-							if (frames is { Length: > 0 }) {
+						if (frames is { Length: > 0 }) {
+							methodName = frames[old].GetMethod().Name;
+							className  = frames[old].GetMethod().DeclaringType?.Name ?? className;
+							while ((className.StartsWith("<") || IgnoreStack.Any(s => $"{className}.{methodName}".Contains(s))) && frames.Length > ++old) {
 								methodName = frames[old].GetMethod().Name;
 								className  = frames[old].GetMethod().DeclaringType?.Name ?? className;
-								while ((className.StartsWith("<") || IgnoreStack.Any(s => $"{className}.{methodName}".Contains(s))) && frames.Length > ++old) {
-									methodName = frames[old].GetMethod().Name;
-									className  = frames[old].GetMethod().DeclaringType?.Name ?? className;
-								}
 							}
-
-							var logMessage       = message.ToString();
-							var stackTraceString = stackTrace.ToString();
-
-							lock (FileLock) {
-								if (!IsInitialized) {
-									Init();
-									IsInitialized = true;
-								} else if (!File.Exists(LogFile) || new FileInfo(LogFile).Length > MaxLogSize) {
-									Init();
-									// Note: Avoid recursive call here, just log directly
-									using var fs     = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-									using var writer = new StreamWriter(fs);
-									writer.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [Log] [Logger.OnLog] Log file exceeded maximum size and was rotated.");
-								}
-
-								using (var fs = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-								using (var writer = new StreamWriter(fs)) {
-									writer.WriteLine($"[{timestamp:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [{type}] [{(string.IsNullOrEmpty(tag) ? "" : tag + ":")}{className}.{methodName}] {logMessage}");
-
-									if (type is LogType.Error or LogType.Warning)
-										writer.Write(stackTraceString + "\n");
-								}
-							}
-						} catch (Exception e) {
-							// Can't use custom logging here to avoid infinite recursion
-							ULogger.LogException(e);
 						}
-					}
-				);
 
+						var logMessage       = message.ToString();
+						var stackTraceString = stackTrace.ToString();
+
+						lock (FileLock) {
+							if (!IsInitialized) {
+								Init();
+								IsInitialized = true;
+							} else if (!File.Exists(LogFile) || new FileInfo(LogFile).Length > MaxLogSize) {
+								Init();
+								// Note: Avoid recursive call here, just log directly
+								using var fs     = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+								using var writer = new StreamWriter(fs);
+								writer.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [Log] [Logger.OnLog] Log file exceeded maximum size and was rotated.");
+							}
+
+							using (var fs = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+							using (var writer = new StreamWriter(fs)) {
+								writer.WriteLine($"[{timestamp:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [{type}] [{(string.IsNullOrEmpty(tag) ? "" : tag + ":")}{className}.{methodName}] {logMessage}");
+
+								if (type is LogType.Error or LogType.Warning)
+									writer.Write(stackTraceString + "\n");
+							}
+						}
+					} catch (Exception e) {
+						// Can't use custom logging here to avoid infinite recursion
+						ULogger.LogException(e);
+					}
+				});
+				
 				if (History.Count > MaxLogLines)
 					History.RemoveAt(0);
 
