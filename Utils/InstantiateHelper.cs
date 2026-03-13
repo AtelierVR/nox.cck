@@ -26,10 +26,8 @@ namespace Nox.CCK.Utils {
 		public static T Instantiate<T>(this GameObject prefab, Transform parent = null) where T : Component {
 			var instance  = prefab.Instantiate(parent);
 			var component = instance.GetComponent<T>();
-
 			if (component)
 				return component;
-
 			instance.Destroy();
 			throw new Exception($"Component of type {typeof(T).Name} not found on instantiated prefab {prefab.name}.");
 		}
@@ -51,8 +49,7 @@ namespace Nox.CCK.Utils {
 			var instance = Object.Instantiate(prefab, parent);
 			if (!instance)
 				throw new Exception($"Failed to instantiate prefab {prefab.name}.");
-			if (parent)
-				instance.DontDestroyOnLoad();
+			FixInstantiate(instance, prefab, parent);
 			OnInstantiate.Invoke(instance);
 			return instance;
 		}
@@ -77,7 +74,7 @@ namespace Nox.CCK.Utils {
 				progress: progress,
 				cancellationToken: cancellationToken
 			);
-		
+
 		/// <summary>
 		/// Asynchronously instantiates a prefab and returns the instantiated GameObject.
 		/// If a parent transform is provided,
@@ -100,7 +97,7 @@ namespace Nox.CCK.Utils {
 				progress: progress,
 				cancellationToken: cancellationToken
 			);
-		
+
 		/// <summary>
 		/// Asynchronously instantiates a prefab and returns the specified component type from the instantiated GameObject.
 		/// </summary>
@@ -118,10 +115,8 @@ namespace Nox.CCK.Utils {
 		) where T : Component {
 			var instance  = await prefab.InstantiateAsync(parent, progress: progress, cancellationToken: cancellationToken);
 			var component = instance.GetComponent<T>();
-
 			if (component)
 				return component;
-
 			instance.Destroy();
 			throw new Exception($"Component of type {typeof(T).Name} not found on instantiated prefab {prefab.name}.");
 		}
@@ -153,10 +148,23 @@ namespace Nox.CCK.Utils {
 			)).FirstOrDefault();
 			if (!instance)
 				throw new Exception($"Failed to instantiate prefab {prefab.name}.");
-			if (parent)
-				instance.DontDestroyOnLoad();
+			FixInstantiate(instance, prefab, parent);
 			OnInstantiate.Invoke(instance);
 			return instance;
+		}
+
+		private static void FixInstantiate(GameObject instance, GameObject prefab, Transform parent) {
+			if (parent)
+				instance.DontDestroyOnLoad();
+			else
+				instance.transform.SetParent(parent);
+			instance.transform.position   = prefab.transform.position;
+			instance.transform.rotation   = prefab.transform.rotation;
+			instance.transform.localScale = prefab.transform.localScale;
+			if (!prefab.TryGetComponent<RectTransform>(out var pRect) || !instance.TryGetComponent<RectTransform>(out var iRect))
+				return;
+			iRect.sizeDelta        = pRect.sizeDelta;
+			iRect.anchoredPosition = pRect.anchoredPosition;
 		}
 	}
 }
