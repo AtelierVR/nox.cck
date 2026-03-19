@@ -3,7 +3,6 @@ using Object = UnityEngine.Object;
 using System.IO;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -334,16 +333,20 @@ namespace Nox.CCK.Utils {
 		// ReSharper disable Unity.PerformanceAnalysis
 		public static void Print(LogType type, object message, Object context = null, string tag = null) {
 			message ??= "<null>";
-			OnLog.Invoke(type, tag, message.ToString(), context);
+			var logMessage = message.ToString();
+			OnLog.Invoke(type, tag, logMessage, context);
 
 			if (type == LogType.Debug && !Config.Load().Get("debug.logging", Application.isEditor))
 				return;
 
 			try {
-				// Capture stack trace synchronously on the calling thread
-				var stackTrace = new System.Diagnostics.StackTrace(2, true);
-				var frames     = stackTrace.GetFrames();
-				var timestamp  = DateTime.Now;
+				// File info (line numbers) is expensive — only capture it for types that write the stack trace
+				var needsStackTrace = type is LogType.Error or LogType.Warning or LogType.Exception;
+				var stackTrace      = new System.Diagnostics.StackTrace(2, needsStackTrace);
+				var frames          = stackTrace.GetFrames();
+				// Pre-compute once on calling thread; null for types that don't need it
+				var stackTraceStr   = needsStackTrace ? stackTrace.ToString() : null;
+				var timestamp       = DateTime.Now;
 
 				// Write to file in a separate thread
 				UniTask.Post(() => {
@@ -353,16 +356,15 @@ namespace Nox.CCK.Utils {
 						var className  = "<UnknownClass>";
 
 						if (frames is { Length: > 0 }) {
-							methodName = frames[old].GetMethod().Name;
-							className  = frames[old].GetMethod().DeclaringType?.Name ?? className;
-							while ((className.StartsWith("<") || IgnoreStack.Any(s => $"{className}.{methodName}".Contains(s))) && frames.Length > ++old) {
-								methodName = frames[old].GetMethod().Name;
-								className  = frames[old].GetMethod().DeclaringType?.Name ?? className;
+							var method = frames[old].GetMethod();
+							methodName = method?.Name ?? methodName;
+							className  = method?.DeclaringType?.Name ?? className;
+							while (ShouldSkipFrame(className, methodName) && frames.Length > ++old) {
+								method     = frames[old].GetMethod();
+								methodName = method?.Name ?? methodName;
+								className  = method?.DeclaringType?.Name ?? className;
 							}
 						}
-
-						var logMessage       = message.ToString();
-						var stackTraceString = stackTrace.ToString();
 
 						lock (FileLock) {
 							if (!IsInitialized) {
@@ -380,8 +382,8 @@ namespace Nox.CCK.Utils {
 							using (var writer = new StreamWriter(fs)) {
 								writer.WriteLine($"[{timestamp:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [{type}] [{(string.IsNullOrEmpty(tag) ? "" : tag + ":")}{className}.{methodName}] {logMessage}");
 
-								if (type is LogType.Error or LogType.Warning)
-									writer.Write(stackTraceString + "\n");
+								if (stackTraceStr != null)
+									writer.WriteLine(stackTraceStr);
 							}
 						}
 					} catch (Exception e) {
@@ -396,7 +398,7 @@ namespace Nox.CCK.Utils {
 				var entry = new LogEntry {
 					Type      = type,
 					Tag       = tag,
-					Message   = message.ToString(),
+					Message   = logMessage,
 					Context   = context,
 					Timestamp = timestamp
 				};
@@ -439,6 +441,16 @@ namespace Nox.CCK.Utils {
 			} catch (Exception e) {
 				ULogger.LogException(e);
 			}
+		}
+
+		private static bool ShouldSkipFrame(string className, string methodName) {
+			if (className.StartsWith("<"))
+				return true;
+			var fullName = string.Concat(className, ".", methodName);
+			for (var i = 0; i < IgnoreStack.Length; i++)
+				if (fullName.Contains(IgnoreStack[i]))
+					return true;
+			return false;
 		}
 
 		private static string ParseToString(LogEntry entry) {
