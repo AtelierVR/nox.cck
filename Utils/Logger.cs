@@ -330,18 +330,62 @@ namespace Nox.CCK.Utils {
 			"PlayerLoopHelper.ForceEditorPlayerLoopUpdate"
 		};
 
+		public static bool DebugLogging {
+			get => Config.Load().Get("debug.logging", Application.isEditor);
+			set { 
+				var config = Config.Load();
+				config.Set("debug.logging", value); 
+				config.Save(); 
+			}
+		}
+
+		public static bool DebugStackTrace {
+			get => Config.Load().Get("debug.stacktrace", false);
+			set { 
+				var config = Config.Load();
+				config.Set("debug.stacktrace", value); 
+				config.Save(); 
+			}
+		}
+
+		#if UNITY_EDITOR
+		[MenuItem("Nox/Logger/Toggle Debug Logging")]
+		private static void ToggleDebugLogging() {
+			DebugLogging = !DebugLogging;
+			ULogger.Log($"[Logger] debug.logging = {DebugLogging}");
+		}
+
+		[MenuItem("Nox/Logger/Toggle Debug Logging", true)]
+		private static bool ToggleDebugLoggingValidate() {
+			UnityEditor.Menu.SetChecked("Nox/Logger/Toggle Debug Logging", DebugLogging);
+			return true;
+		}
+
+		[MenuItem("Nox/Logger/Toggle Stack Trace")]
+		private static void ToggleDebugStackTrace() {
+			DebugStackTrace = !DebugStackTrace;
+			ULogger.Log($"[Logger] debug.stacktrace = {DebugStackTrace}");
+		}
+
+		[MenuItem("Nox/Logger/Toggle Stack Trace", true)]
+		private static bool ToggleDebugStackTraceValidate() {
+			UnityEditor.Menu.SetChecked("Nox/Logger/Toggle Stack Trace", DebugStackTrace);
+			return true;
+		}
+		#endif
+
 		// ReSharper disable Unity.PerformanceAnalysis
 		public static void Print(LogType type, object message, Object context = null, string tag = null) {
 			message ??= "<null>";
 			var logMessage = message.ToString();
 			OnLog.Invoke(type, tag, logMessage, context);
 
-			if (type == LogType.Debug && !Config.Load().Get("debug.logging", Application.isEditor))
+			if (type == LogType.Debug && !DebugLogging)
 				return;
 
 			try {
 				// File info (line numbers) is expensive — only capture it for types that write the stack trace
-				var needsStackTrace = type is LogType.Error or LogType.Warning or LogType.Exception;
+				var needsStackTrace = DebugStackTrace || type is LogType.Error or LogType.Warning or LogType.Exception;
 				var stackTrace      = new System.Diagnostics.StackTrace(2, needsStackTrace);
 				var frames          = stackTrace.GetFrames();
 				// Pre-compute once on calling thread; null for types that don't need it
