@@ -35,7 +35,18 @@ namespace Nox.CCK.Utils
         public static Engine CurrentEngine 
             => Engine.Unity;
         
-        public static Version CurrentVersion 
-            => new(Application.unityVersion.Split('f')[0]);
+        public static Version CurrentVersion
+        {
+            get
+            {
+                var sb = new System.Text.StringBuilder();
+                foreach (var c in Application.unityVersion)
+                {
+                    if (char.IsDigit(c) || c == '.') sb.Append(c);
+                    else break;
+                }
+                return Version.TryParse(sb.ToString().TrimEnd('.'), out var v) ? v : new Version(0, 0, 0);
+            }
+        }
     }
 }

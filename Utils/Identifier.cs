@@ -58,6 +58,7 @@ namespace Nox.CCK.Utils {
 						continue;
 					query[k] = qs.GetValues(k);
 				}
+				raw = raw[..qIdx];
 			}
 
 			string type     = null;
