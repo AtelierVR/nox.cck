@@ -110,6 +110,7 @@ namespace Nox.CCK.Language {
 			pack.languages = pack.languages
 				.Where(l => l != null && !string.IsNullOrEmpty(l.IETF) && l.entries != null)
 				.ToArray();
+			pack.InvalidateIndex();
 			LanguagePacks.Add(pack);
 			OnPackListUpdated.Invoke();
 		}
@@ -126,15 +127,22 @@ namespace Nox.CCK.Language {
 
 		public static string GetInPacks(string language, string key, List<LanguagePack> packs = null) {
 			packs ??= LanguagePacks;
-			foreach (var t in packs.Where(t => t))
-				if (t.TryGetLocalizedString(language, key, out var value))
+			for (var i = 0; i < packs.Count; i++) {
+				var pack = packs[i];
+				if (!pack) continue;
+				if (pack.TryGetLocalizedString(language, key, out var value))
 					return value;
+			}
 			return null;
 		}
 
 		public static bool Has(string language, string key, List<LanguagePack> packs = null) {
 			packs ??= LanguagePacks;
-			return packs.Where(t => t).Any(t => t.HasLocalizationString(language, key));
+			for (var i = 0; i < packs.Count; i++) {
+				var pack = packs[i];
+				if (pack && pack.HasLocalizationString(language, key)) return true;
+			}
+			return false;
 		}
 
 		public static bool Has(string key, List<LanguagePack> packs = null)
