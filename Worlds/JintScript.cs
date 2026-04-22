@@ -95,7 +95,7 @@
 //
 // 		private void Log(LogType type, JsValue[] args) {
 // 			var parsed  = string.Join(" ", args.Select(x => x.ToString()));
-// 			var message = $"Jint-{GetInstanceID()}: {parsed}";
+// 			var message = $"Jint-.GetEntityId().GetHashCode()}: {parsed}";
 // 			switch (type) {
 // 				case LogType.Log:
 // 					Logger.Log(message, this);
