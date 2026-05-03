@@ -155,9 +155,8 @@ namespace Nox.CCK.Utils {
 
 		private static void FixInstantiate(GameObject instance, GameObject prefab, Transform parent) {
 			if (parent)
-				instance.DontDestroyOnLoad();
-			else
 				instance.transform.SetParent(parent);
+			else instance.DontDestroyOnLoad();
 			instance.transform.position   = prefab.transform.position;
 			instance.transform.rotation   = prefab.transform.rotation;
 			instance.transform.localScale = prefab.transform.localScale;
