@@ -182,11 +182,9 @@ namespace Nox.CCK.Utils {
 				.FirstOrDefault(result => result);
 		}
 
-		public static bool DontDestroyOnLoad(this GameObject gameObject) {
-			if (!gameObject)
-				return false;
+		public static void DontDestroyOnLoad(this GameObject gameObject) {
+			if (!gameObject) return;
 			Object.DontDestroyOnLoad(gameObject);
-			return true;
 		}
 	}
 }
