@@ -16,8 +16,11 @@ namespace Nox.CCK.Utils
 	[DisallowMultipleComponent]
 	public class CameraChop : MonoBehaviour
 	{
-		[Tooltip("The camera that will NOT see the chop bones."), NonSerialized]
+		[Tooltip("Camera(s) to hide the bones from. Can be registered at runtime using the static API."), NonSerialized]
 		public static Camera[] WatchedCamera = Array.Empty<Camera>();
+
+		[Tooltip("All active CameraChop instances."), NonSerialized]
+		public static CameraChop[] Instances = Array.Empty<CameraChop>();
 
 		public static void RegisterCamera(Camera cam)
 		{
@@ -41,9 +44,55 @@ namespace Nox.CCK.Utils
 		public static bool IsCameraWatched(Camera cam)
 			=> cam && Array.IndexOf(WatchedCamera, cam) >= 0;
 
-		[Tooltip("Bones whose localScale is set to zero before rendering the watched camera.")]
-		[SerializeField] private Transform[] _bones = Array.Empty<Transform>();
+		// ── Instance registry ───────────────────────────────────────────────────
 
+		private static void AddInstance(CameraChop instance)
+		{
+			if (instance == null || Array.IndexOf(Instances, instance) >= 0) return;
+			Array.Resize(ref Instances, Instances.Length + 1);
+			Instances[^1] = instance;
+			Logger.LogDebug($"CameraChop instance added (total: {Instances.Length})", tag: nameof(CameraChop));
+		}
+
+		private static void RemoveInstance(CameraChop instance)
+		{
+			if (instance == null) return;
+			int index = Array.IndexOf(Instances, instance);
+			if (index < 0) return;
+			for (int i = index; i < Instances.Length - 1; i++)
+				Instances[i] = Instances[i + 1];
+			Array.Resize(ref Instances, Instances.Length - 1);
+			Logger.LogDebug($"CameraChop instance removed (total: {Instances.Length})", tag: nameof(CameraChop));
+		}
+
+		/// <summary>
+		/// Restores bone scales on every active <see cref="CameraChop"/> instance.
+		/// Call this before rendering a secondary camera (e.g. a mirror) so it sees
+		/// the full avatar, then call <see cref="HideAllForCamera"/> afterwards to
+		/// re-apply hiding for the primary first-person camera.
+		/// </summary>
+		public static void RestoreAllScales()
+		{
+			foreach (var instance in Instances)
+				instance.RestoreScales();
+		}
+
+		/// <summary>
+		/// Re-hides the chop bones on every active instance for the given watched camera.
+		/// No-op if <paramref name="cam"/> is not a watched camera.
+		/// </summary>
+		public static void HideAllForCamera(Camera cam)
+		{
+			if (!IsCameraWatched(cam)) return;
+			foreach (var instance in Instances)
+				for (int i = 0; i < instance._bones.Length; i++)
+					if (instance._bones[i]) instance._bones[i].localScale = Vector3.zero;
+		}
+
+		[Tooltip("Bones whose localScale is set to zero before rendering the watched camera."), SerializeField]
+		private Transform[] _bones = Array.Empty<Transform>();
+
+		[NonSerialized]
 		private Vector3[] _originalScales = Array.Empty<Vector3>();
 
 		// ── Public API ──────────────────────────────────────────────────────────
@@ -78,6 +127,7 @@ namespace Nox.CCK.Utils
 
 		protected virtual void OnEnable()
 		{
+			AddInstance(this);
 			Bones = Bones; // Cache original scales
 			RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
 			RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
@@ -85,6 +135,7 @@ namespace Nox.CCK.Utils
 
 		protected virtual void OnDisable()
 		{
+			RemoveInstance(this);
 			RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
 			RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
 			RestoreScales();
