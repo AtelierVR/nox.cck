@@ -3,11 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 
@@ -204,6 +206,41 @@ namespace Nox.CCK.Utils {
 
 			var publicKeyInfo = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(rsaPublicKey);
 			return publicKeyInfo.GetDerEncoded();
+		}
+
+		public static RSA CreateKeyPair(int keySize = DefaultKeySize)
+			=> GenerateKeys(keySize);
+
+		public static byte[] ExportPrivateKeyToDer(RSA rsa) {
+			var p = rsa.ExportParameters(true);
+			var key = new RsaPrivateCrtKeyParameters(
+				new Org.BouncyCastle.Math.BigInteger(1, p.Modulus),
+				new Org.BouncyCastle.Math.BigInteger(1, p.Exponent),
+				new Org.BouncyCastle.Math.BigInteger(1, p.D),
+				new Org.BouncyCastle.Math.BigInteger(1, p.P),
+				new Org.BouncyCastle.Math.BigInteger(1, p.Q),
+				new Org.BouncyCastle.Math.BigInteger(1, p.DP),
+				new Org.BouncyCastle.Math.BigInteger(1, p.DQ),
+				new Org.BouncyCastle.Math.BigInteger(1, p.InverseQ)
+			);
+			return PrivateKeyInfoFactory.CreatePrivateKeyInfo(key).GetDerEncoded();
+		}
+
+		public static RSA ImportPrivateKeyFromDer(byte[] derData) {
+			var keyInfo    = PrivateKeyInfo.GetInstance(derData);
+			var privateKey = (RsaPrivateCrtKeyParameters)PrivateKeyFactory.CreateKey(keyInfo);
+			var rsa        = RSA.Create();
+			rsa.ImportParameters(new RSAParameters {
+				Modulus  = privateKey.Modulus.ToByteArrayUnsigned(),
+				Exponent = privateKey.PublicExponent.ToByteArrayUnsigned(),
+				D        = privateKey.Exponent.ToByteArrayUnsigned(),
+				P        = privateKey.P.ToByteArrayUnsigned(),
+				Q        = privateKey.Q.ToByteArrayUnsigned(),
+				DP       = privateKey.DP.ToByteArrayUnsigned(),
+				DQ       = privateKey.DQ.ToByteArrayUnsigned(),
+				InverseQ = privateKey.QInv.ToByteArrayUnsigned()
+			});
+			return rsa;
 		}
 
 		/// <summary>
