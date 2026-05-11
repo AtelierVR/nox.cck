@@ -1,5 +1,4 @@
 using Nox.CCK.Mods.Libs;
-using Nox.CCK.Mods.Panels;
 
 namespace Nox.CCK.Mods.Cores
 {
@@ -8,11 +7,6 @@ namespace Nox.CCK.Mods.Cores
     /// </summary>
     public interface IEditorModCoreAPI : IModCoreAPI
     {
-        /// <summary>
-        /// Gets the panel management API for the editor.
-        /// </summary>
-        public IEditorModPanelAPI PanelAPI { get; }
-        
         /// <summary>
         /// Gets the libraries API for the editor.
         /// </summary>
