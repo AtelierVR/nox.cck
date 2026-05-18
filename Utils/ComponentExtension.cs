@@ -183,8 +183,12 @@ namespace Nox.CCK.Utils {
 		}
 
 		public static void DontDestroyOnLoad(this GameObject gameObject) {
-			if (!gameObject) return;
+			if (!gameObject)
+				return;
 			Object.DontDestroyOnLoad(gameObject);
 		}
+		
+		public static bool IsPrefab(this GameObject gameObject)
+			=> gameObject && !gameObject.scene.IsValid();
 	}
 }
