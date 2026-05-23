@@ -7,6 +7,7 @@ namespace Nox.CCK.Convertors {
 	/// Is used for public keys in the SDK, which are stored as byte arrays but need to be serialized as strings in JSON.
 	/// </summary>
 	public class Base64ToBytes : JsonConverter<byte[]> {
+		public Base64ToBytes() { }
 
 		/// <summary>
 		/// Writes a byte array as a Base64 string to the JSON writer.
