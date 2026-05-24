@@ -30,6 +30,8 @@ namespace Nox.CCK.Utils {
 		public static bool IsInitialized { get; private set; } = false;
 
 		private static readonly object FileLock = new();
+		// Persistent writer – kept open to avoid OS file-handle open/close overhead (~1-2ms each).
+		private static StreamWriter _logWriter;
 
 
 		public ILogHandler logHandler { get; set; } = ULogger.unityLogger.logHandler;
@@ -136,6 +138,10 @@ namespace Nox.CCK.Utils {
 
 		public static void Init() {
 			lock (FileLock) {
+				// Close any existing writer before rotating the file
+				_logWriter?.Close();
+				_logWriter = null;
+
 				if (!Directory.Exists(LogDir))
 					Directory.CreateDirectory(LogDir);
 
@@ -150,15 +156,13 @@ namespace Nox.CCK.Utils {
 					File.Move(LogFile, newFileName);
 				}
 
-				// Create the file
-				File.Create(LogFile).Dispose();
-				LogID = (byte)new System.Random().Next(byte.MinValue, byte.MaxValue);
+				// Open a persistent writer (FileMode.Create after the Move above)
+				_logWriter = new StreamWriter(
+					new FileStream(LogFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)
+				) { AutoFlush = true };
 
-				File.AppendAllLines(
-					LogFile, new[] {
-						$"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] Logger initialized."
-					}
-				);
+				LogID = (byte)new System.Random().Next(byte.MinValue, byte.MaxValue);
+				_logWriter.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] Logger initialized.");
 			}
 		}
 
@@ -330,21 +334,34 @@ namespace Nox.CCK.Utils {
 			"PlayerLoopHelper.ForceEditorPlayerLoopUpdate"
 		};
 
+		private static bool? _debugLoggingCache;
+		private static bool? _debugStackTraceCache;
+
 		public static bool DebugLogging {
-			get => Config.Load().Get("debug.logging", Application.isEditor);
-			set { 
+			get {
+				if (_debugLoggingCache.HasValue) return _debugLoggingCache.Value;
+				_debugLoggingCache = Config.Load().Get("debug.logging", Application.isEditor);
+				return _debugLoggingCache.Value;
+			}
+			set {
+				_debugLoggingCache = value;
 				var config = Config.Load();
-				config.Set("debug.logging", value); 
-				config.Save(); 
+				config.Set("debug.logging", value);
+				config.Save();
 			}
 		}
 
 		public static bool DebugStackTrace {
-			get => Config.Load().Get("debug.stacktrace", false);
-			set { 
+			get {
+				if (_debugStackTraceCache.HasValue) return _debugStackTraceCache.Value;
+				_debugStackTraceCache = Config.Load().Get("debug.stacktrace", false);
+				return _debugStackTraceCache.Value;
+			}
+			set {
+				_debugStackTraceCache = value;
 				var config = Config.Load();
-				config.Set("debug.stacktrace", value); 
-				config.Save(); 
+				config.Set("debug.stacktrace", value);
+				config.Save();
 			}
 		}
 
@@ -386,20 +403,25 @@ namespace Nox.CCK.Utils {
 			try {
 				// File info (line numbers) is expensive — only capture it for types that write the stack trace
 				var needsStackTrace = DebugStackTrace || type is LogType.Error or LogType.Warning or LogType.Exception;
-				var stackTrace      = new System.Diagnostics.StackTrace(2, needsStackTrace);
-				var frames          = stackTrace.GetFrames();
-				// Pre-compute once on calling thread; null for types that don't need it
-				var stackTraceStr   = needsStackTrace ? stackTrace.ToString() : null;
-				var timestamp       = DateTime.Now;
+				// Avoid StackTrace entirely for Debug logs when stack trace is not needed —
+				// walking a deep async call stack (UniTask state machines) can take several ms.
+				System.Diagnostics.StackFrame[] frames = null;
+				string stackTraceStr = null;
+				if (needsStackTrace) {
+					var stackTrace = new System.Diagnostics.StackTrace(2, needsStackTrace);
+					frames         = stackTrace.GetFrames();
+					stackTraceStr  = stackTrace.ToString();
+				}
+				var timestamp = DateTime.Now;
 
 				// Write to file in a separate thread
 				UniTask.Post(() => {
 					try {
-						var old        = 0;
 						var methodName = "<UnknownMethod>";
 						var className  = "<UnknownClass>";
 
 						if (frames is { Length: > 0 }) {
+							var old    = 0;
 							var method = frames[old].GetMethod();
 							methodName = method?.Name ?? methodName;
 							className  = method?.DeclaringType?.Name ?? className;
@@ -414,21 +436,17 @@ namespace Nox.CCK.Utils {
 							if (!IsInitialized) {
 								Init();
 								IsInitialized = true;
-							} else if (!File.Exists(LogFile) || new FileInfo(LogFile).Length > MaxLogSize) {
+							} else if (_logWriter == null || !File.Exists(LogFile) || new FileInfo(LogFile).Length > MaxLogSize) {
 								Init();
 								// Note: Avoid recursive call here, just log directly
-								using var fs     = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-								using var writer = new StreamWriter(fs);
-								writer.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [Log] [Logger.OnLog] Log file exceeded maximum size and was rotated.");
+								_logWriter.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [Log] [Logger.OnLog] Log file exceeded maximum size and was rotated.");
 							}
 
-							using (var fs = new FileStream(LogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-							using (var writer = new StreamWriter(fs)) {
-								writer.WriteLine($"[{timestamp:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [{type}] [{(string.IsNullOrEmpty(tag) ? "" : tag + ":")}{className}.{methodName}] {logMessage}");
+							// Use the persistent writer — avoids per-call FileStream open/close overhead
+							_logWriter.WriteLine($"[{timestamp:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [{type}] [{(string.IsNullOrEmpty(tag) ? "" : tag + ":")}{className}.{methodName}] {logMessage}");
 
-								if (stackTraceStr != null)
-									writer.WriteLine(stackTraceStr);
-							}
+							if (stackTraceStr != null)
+								_logWriter.WriteLine(stackTraceStr);
 						}
 					} catch (Exception e) {
 						// Can't use custom logging here to avoid infinite recursion
