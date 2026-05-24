@@ -150,6 +150,9 @@ namespace Nox.CCK.Utils {
 				throw new Exception($"Failed to instantiate prefab {prefab.name}.");
 			FixInstantiate(instance, prefab, parent);
 			OnInstantiate.Invoke(instance);
+			// Yield so callers resume on the next frame, preventing all post-instantiation
+			// setup from piling into the same frame as IntegrateInMainThread.
+			await UniTask.Yield(cancellationToken: cancellationToken);
 			return instance;
 		}
 
