@@ -153,12 +153,18 @@ namespace Nox.CCK.Utils {
 						newFileName = Path.Combine(LogDir, $"log_{creationTime:yyyy-MM-dd_HH-mm-ss}_{i++}.log");
 					} while (File.Exists(newFileName));
 
-					File.Move(LogFile, newFileName);
+					try {
+						File.Move(LogFile, newFileName);
+					} catch (IOException) {
+						// The file is held open by another process (e.g. a second game instance or the editor).
+						// Skip rotation and fall through to truncate+overwrite with FileMode.Create below.
+					}
 				}
 
-				// Open a persistent writer (FileMode.Create after the Move above)
+				// Open a persistent writer (FileMode.Create after the Move above).
+				// FileShare.Delete allows another process to rotate (File.Move) this file while we hold it open.
 				_logWriter = new StreamWriter(
-					new FileStream(LogFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)
+					new FileStream(LogFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete)
 				) { AutoFlush = true };
 
 				LogID = (byte)new System.Random().Next(byte.MinValue, byte.MaxValue);
