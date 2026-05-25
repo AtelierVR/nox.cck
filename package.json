@@ -1,5 +1,6 @@
-{
-  "name": "nox.cck",
-  "displayName": "Nox - CCK",
-  "version": "1.0.0"
+﻿{
+    "name":  "nox.cck",
+    "displayName":  "Nox - CCK",
+    "version":  "1.0.0",
+    "description":  "Content Creation Kit (CCK) - base types and interfaces for creating Nox-compatible content."
 }
