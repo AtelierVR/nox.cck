@@ -2,7 +2,8 @@
   "name": "Nox.CCK.Editor",
   "rootNamespace": "",
   "references": [
-    "UniTask"
+    "UniTask",
+    "Nox.CCK"
   ],
   "includePlatforms": [
     "Editor"
