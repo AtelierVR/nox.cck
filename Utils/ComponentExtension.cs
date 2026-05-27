@@ -12,8 +12,10 @@ namespace Nox.CCK.Utils {
 		public static T GetOrAddComponent<T>(this Component component) where T : Component
 			=> component.gameObject.GetOrAddComponent<T>();
 
-		public static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component
-			=> gameObject.GetComponent<T>() ?? gameObject.AddComponent<T>();
+		public static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component {
+			var c = gameObject.GetComponent<T>();
+			return c ? c : gameObject.AddComponent<T>();
+		}
 
 		public static bool HasComponent<T>(this Component component) where T : Component
 			=> component.gameObject.HasComponent<T>();
