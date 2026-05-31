@@ -7,9 +7,5 @@ namespace Nox.CCK.Mods.Cores
     /// </summary>
     public interface IEditorModCoreAPI : IModCoreAPI
     {
-        /// <summary>
-        /// Gets the libraries API for the editor.
-        /// </summary>
-        public EditorLibsAPI LibsAPI { get; }
     }
 }

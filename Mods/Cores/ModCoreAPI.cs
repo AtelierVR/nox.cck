@@ -18,11 +18,6 @@ namespace Nox.CCK.Mods.Cores {
 		public IModMetadata ModMetadata { get; }
 
 		/// <summary>
-		/// Gets the chat management API.
-		/// </summary>
-		public IChatAPI ChatAPI { get; }
-
-		/// <summary>
 		/// Gets the event management API.
 		/// </summary>
 		public IEventAPI EventAPI { get; }

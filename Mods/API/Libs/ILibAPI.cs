@@ -10,11 +10,11 @@ namespace Nox.CCK.Mods.Libs {
 		/// Returns an ordered list of directories where native plugins (.dll / .so / .dylib)
 		/// for this mod can be found. The first directory that contains the requested file wins.
 		/// </summary>
-		string[] GetNativePluginFolders();
+		string[] GetFolders();
 
 		/// <summary>
 		/// Returns the names of all native library files (without extension) discoverable
-		/// in the folders returned by <see cref="GetNativePluginFolders"/>.
+		/// in the folders returned by <see cref="GetFolders"/>.
 		/// </summary>
 		string[] GetLibraries();
 
@@ -31,9 +31,25 @@ namespace Nox.CCK.Mods.Libs {
 
 		/// <summary>
 		/// Returns the full path to the native library file named <paramref name="name"/> (without extension),
-		/// searching through <see cref="GetNativePluginFolders"/> in order.
+		/// searching through <see cref="GetFolders"/> in order.
 		/// Returns <c>null</c> if the file is not found in any folder.
 		/// </summary>
 		string ToPath(string name);
-	}
+
+		/// <summary>
+		/// Loads the native library <paramref name="name"/> (without extension) into the process.
+		/// Uses <c>LoadLibrary</c> on Windows, <c>dlopen</c> on Linux/macOS.
+		/// Searches the current mod's plugin folders first, then falls back to global paths.
+		/// Reference-counted — safe to call multiple times from different mods.
+		/// <para>
+		/// After calling this, <c>[DllImport("name")]</c> will resolve from the loaded library.
+		/// </para>
+		/// <exception cref="DllNotFoundException">Thrown if the library is not found or fails to load.</exception>
+		void Load(string name);
+
+		/// <summary>
+		/// Unloads (reference-counted decrement) the native library <paramref name="name"/>.
+		/// The physical library is only unloaded when no mod references it anymore.
+		/// </summary>
+		void Unload(string name);			}
 }
