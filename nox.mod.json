@@ -3,10 +3,10 @@
   "id": "nox.cck",
   "relations": [
     { "id": "com.cysharp.unitask", "type": "depends", "register": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask" },
-    { "id": "com.unity.nuget.newtonsoft-json", "type": "depends", "register": "upm+:com.unity.nuget.newtonsoft-json@3.2.2" },
-    { "id": "com.unity.textmeshpro", "type": "depends", "register": "upm+:com.unity.textmeshpro@3.0.0" },
-    { "id": "com.unity.modules.physics", "type": "depends", "register": "upm+:com.unity.modules.physics@1.0.0" },
-    { "id": "com.unity.modules.audio", "type": "depends", "register": "upm+:com.unity.modules.physics@1.0.0" },
-    { "id": "com.unity.modules.animation", "type": "depends", "register": "upm+:com.unity.modules.physics@1.0.0" }
+    { "id": "com.unity.nuget.newtonsoft-json", "type": "depends", "register": "upm+com.unity.nuget.newtonsoft-json@3.2.2" },
+    { "id": "com.unity.textmeshpro", "type": "depends", "register": "upm+com.unity.textmeshpro@3.0.0" },
+    { "id": "com.unity.modules.physics", "type": "depends", "register": "upm+com.unity.modules.physics@1.0.0" },
+    { "id": "com.unity.modules.audio", "type": "depends", "register": "upm+com.unity.modules.physics@1.0.0" },
+    { "id": "com.unity.modules.animation", "type": "depends", "register": "upm+com.unity.modules.physics@1.0.0" }
   ]
 }
