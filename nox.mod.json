@@ -1,20 +1,12 @@
-{
+﻿{
   "type": "library",
   "id": "nox.cck",
-  "registers": {
-    "com.cysharp.unitask": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.unity.nuget.newtonsoft-json": "upm:3.2.2",
-    "com.unity.textmeshpro": "upm:3.0.0",
-    "com.unity.modules.physics": "upm:1.0.0",
-    "com.unity.modules.audio": "upm:1.0.0",
-    "com.unity.modules.animation": "upm:1.0.0"
-  },
   "relations": [
-    { "id": "com.cysharp.unitask", "type": "depends" },
-    { "id": "com.unity.nuget.newtonsoft-json", "type": "depends" },
-    { "id": "com.unity.textmeshpro", "type": "depends" },
-    { "id": "com.unity.modules.physics", "type": "depends" },
-    { "id": "com.unity.modules.audio", "type": "depends" },
-    { "id": "com.unity.modules.animation", "type": "depends" }
+    { "id": "com.cysharp.unitask", "type": "depends", "register": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask" },
+    { "id": "com.unity.nuget.newtonsoft-json", "type": "depends", "register": "upm:3.2.2" },
+    { "id": "com.unity.textmeshpro", "type": "depends", "register": "upm:3.0.0" },
+    { "id": "com.unity.modules.physics", "type": "depends", "register": "upm:1.0.0" },
+    { "id": "com.unity.modules.audio", "type": "depends", "register": "upm:1.0.0" },
+    { "id": "com.unity.modules.animation", "type": "depends", "register": "upm:1.0.0" }
   ]
 }
