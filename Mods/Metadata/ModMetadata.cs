@@ -26,15 +26,15 @@ namespace Nox.CCK.Mods.Metadata {
 		public IRelation[]  GetConflicts();
 		public IRelation[]  GetRecommends();
 		public IRelation[]  GetSuggests();
-		public Reference[] GetReferences();
+		public IReference[] GetReferences();
 
 		public T GetCustom<T>(string key, T defaultValue = default);
 
 		public bool                       HasCustom<T>(string key);
 		public Dictionary<string, object> GetCustoms();
 
-		public JObject ToObject();
-		public string  ToJson();
+		public JObject ToObject(ModMetadataFormat format = ModMetadataFormat.None);
+		public string  ToJson(ModMetadataFormat format = ModMetadataFormat.None);
 
 		public bool Match(IModMetadata req);
 		public bool Match(string      id);
@@ -43,7 +43,7 @@ namespace Nox.CCK.Mods.Metadata {
 
 		#if UNITY_EDITOR
 		public void SetCustom<T>(string key, T value);
-		public bool Save(string         path);
+		public bool Save(string path, ModMetadataFormat format = ModMetadataFormat.None);
 		#endif
 	}
 }

@@ -24,10 +24,11 @@ namespace Nox.CCK.Mods.Libs {
 		string GetExtension();
 
 		/// <summary>
-		/// Returns the current CPU architecture subfolder name used by Unity's native plugin layout
-		/// (e.g. "x86_64", "ARM64"), or <c>null</c> if the architecture is not recognised.
+		/// Returns the prioritized list of compatible plugin subfolder names for the current
+		/// platform and CPU architecture (e.g. ["win64", "x86_64", "x64"] on Windows x64).
+		/// These are used to compose search paths like Plugins/{subfolder}.
 		/// </summary>
-		string GetArch();
+		string[] GetSubFolders();
 
 		/// <summary>
 		/// Returns the full path to the native library file named <paramref name="name"/> (without extension),

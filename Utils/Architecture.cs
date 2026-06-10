@@ -19,16 +19,16 @@ namespace Nox.CCK.Utils {
 				Architecture.Arm64 => "arm64",
 				_                  => null,
 			};
-		
-		public static Architecture GetArchitectureFromName(string name)
-			=> name switch {
-				"x86"   => Architecture.X86,
-				"x64"   => Architecture.X64,
-				"arm"   => Architecture.Arm,
-				"arm64" => Architecture.Arm64,
-				_       => Architecture.None,
+
+		public static Architecture GetArchitectureFromName(this string name)
+			=> name?.ToLowerInvariant() switch {
+				"x86"             => Architecture.X86,
+				"x64" or "x86_64" => Architecture.X64,
+				"arm" or "armv7"  => Architecture.Arm,
+				"arm64"           => Architecture.Arm64,
+				_                 => Architecture.None,
 			};
-		
+
 		public static Architecture GetArchitecture(this UArchitecture target)
 			=> target switch {
 				UArchitecture.X86   => Architecture.X86,
@@ -37,8 +37,11 @@ namespace Nox.CCK.Utils {
 				UArchitecture.Arm64 => Architecture.Arm64,
 				_                   => Architecture.None,
 			};
-		
+
 		public static Architecture CurrentArchitecture
 			=> RuntimeInformation.ProcessArchitecture.GetArchitecture();
+
+		public static bool IsCompatible(string constraint)
+			=> constraint == "any" || constraint.GetArchitectureFromName() == CurrentArchitecture;
 	}
 }
