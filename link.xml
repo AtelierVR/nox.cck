@@ -3,5 +3,6 @@
 	<assembly fullname="BouncyCastle.Cryptography" preserve="all" />
 	<assembly fullname="Mono.Cecil" preserve="all" />
 	<assembly fullname="Nox.CCK" preserve="all" />
+	<assembly fullname="System.Formats.Asn1" preserve="all" />
 	<assembly fullname="System.Security.Cryptography.Pkcs" preserve="all" />
 </linker>
