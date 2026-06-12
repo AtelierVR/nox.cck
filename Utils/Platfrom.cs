@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using URuntimePlatform = UnityEngine.RuntimePlatform;
 
@@ -21,6 +22,9 @@ namespace Nox.CCK.Utils
 
     public static class PlatformExtensions
     {
+        public static Platform[] All
+            => (Platform[])Enum.GetValues(typeof(Platform));
+
         public static string GetPlatformName(this Platform platform)
             => platform switch
             {

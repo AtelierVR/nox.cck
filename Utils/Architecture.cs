@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 using UArchitecture = System.Runtime.InteropServices.Architecture;
 
@@ -11,6 +12,9 @@ namespace Nox.CCK.Utils {
 	}
 
 	public static class ArchitectureExtensions {
+		public static Architecture[] All
+			=> (Architecture[])Enum.GetValues(typeof(Architecture));
+
 		public static string GetArchitectureName(this Architecture architecture)
 			=> architecture switch {
 				Architecture.X86   => "x86",
