@@ -459,7 +459,7 @@ namespace Nox.CCK.Utils {
 						ULogger.LogException(e);
 					}
 				});
-				
+
 				if (History.Count > MaxLogLines)
 					History.RemoveAt(0);
 
@@ -514,7 +514,7 @@ namespace Nox.CCK.Utils {
 		private static bool ShouldSkipFrame(string className, string methodName) {
 			if (className.StartsWith("<"))
 				return true;
-			var fullName = string.Concat(className, ".", methodName);
+			var fullName = $"{className}.{methodName}";
 			for (var i = 0; i < IgnoreStack.Length; i++)
 				if (fullName.Contains(IgnoreStack[i]))
 					return true;

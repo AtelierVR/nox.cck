@@ -21,6 +21,8 @@ namespace Nox.CCK.Utils {
 			private readonly Dictionary<string, List<string>> _named;
 			private readonly List<string> _positional;
 
+			public const char DEFAULT_SEPARATOR = ',';
+
 			internal ParsedArgs(Dictionary<string, List<string>> named, List<string> positional) {
 				_named = named;
 				_positional = positional;
@@ -28,7 +30,8 @@ namespace Nox.CCK.Utils {
 
 			// ── Has ──────────────────────────────────────────────────────────
 
-			public bool Has(string key) => _named.ContainsKey(Normalize(key));
+			public bool Has(string key) 
+				=> _named.ContainsKey(Normalize(key));
 
 			// ── Get single value ─────────────────────────────────────────────
 
@@ -58,31 +61,71 @@ namespace Nox.CCK.Utils {
 				if (!_named.TryGetValue(k, out var list) || list.Count == 0) return defaultValue;
 				var last = list[^1];
 				// bare flag → stored as empty string
-				if (last == string.Empty) return true;
+				if (string.IsNullOrEmpty(last)) return true;
 				return last is "1" or "true" or "yes";
 			}
 
 			// ── Get array ────────────────────────────────────────────────────
 
-			public string[] GetArray(string key) {
-				var k = Normalize(key);
-				return _named.TryGetValue(k, out var list) ? list.ToArray() : Array.Empty<string>();
+			public string[] GetArray(string key) 
+				=> _named.TryGetValue(Normalize(key), out var list) 
+					? list.ToArray() 
+					: Array.Empty<string>();
+
+			/// <summary>
+			/// Returns all values for a key, splitting on separator if present.
+			/// Example: --noxMod "nox.network,nox.cck" or --noxMod nox.network --noxMod nox.cck
+			/// </summary>
+			public List<string> GetList(string key, char separator = DEFAULT_SEPARATOR) {
+				var result = new List<string>();
+				foreach (var raw in GetArray(key))
+					if (separator != '\0' && raw.Contains(separator))
+						result.AddRange(raw.Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()));
+					else
+						result.Add(raw);
+				return result;
 			}
 
 			public T[] GetArray<T>(string key) {
 				return GetArray(key)
 					.Select(v => {
 						try { return ((T)Convert.ChangeType(v, typeof(T)), true); }
-						catch { return (default(T), false); }
+						catch { return (default, false); }
 					})
 					.Where(t => t.Item2)
 					.Select(t => t.Item1)
 					.ToArray();
 			}
 
+			// ── Get dictionary ──────────────────────────────────────────────
+
+			/// <summary>
+			/// Parses repeated --key k=v entries into a dictionary.
+			/// Example: --noxDep "mod=1.0" --noxDep "lib=2.0" → {{"mod","1.0"},{"lib","2.0"}}
+			/// If a value has no '=', it's used as both key and value.
+			/// If separator is specified, also splits each value on that separator.
+			/// Example: --noxOutput "Win=path;Linux=path" with separator ';'
+			/// </summary>
+			public Dictionary<string, string> GetDictionary(string key, char separator = DEFAULT_SEPARATOR) {
+				var result = new Dictionary<string, string>();
+				void AddEntry(string entry) {
+					var eq = entry.IndexOf('=');
+					var k = eq >= 0 ? entry[..eq].Trim() : entry.Trim();
+					var v = eq >= 0 ? entry[(eq + 1)..].Trim() : entry.Trim();
+					if (!string.IsNullOrEmpty(k)) result[k] = v;
+				}
+				foreach (var raw in GetArray(key))
+					if (separator != '\0' && raw.Contains(separator)) {
+						foreach (var part in raw.Split(separator, StringSplitOptions.RemoveEmptyEntries))
+							AddEntry(part.Trim());
+					} else AddEntry(raw);
+				return result;
+			}
+
 			// ── Positional ───────────────────────────────────────────────────
 
-			public string[] Positional => _positional.ToArray();
+			public string[] Positional 
+				=> _positional.ToArray();
 
 			public string Positional_At(int index, string defaultValue = null)
 				=> index >= 0 && index < _positional.Count ? _positional[index] : defaultValue;
@@ -93,13 +136,14 @@ namespace Nox.CCK.Utils {
 
 			// ── Helpers ──────────────────────────────────────────────────────
 
-			private static string Normalize(string key) => key.TrimStart('-').ToLowerInvariant();
+			private static string Normalize(string key)
+				=> key.TrimStart('-').ToLowerInvariant();
 
 			public override string ToString() {
 				var parts = new List<string>();
 				foreach (var kv in _named)
 					foreach (var v in kv.Value)
-						parts.Add(v == string.Empty ? $"--{kv.Key}" : $"--{kv.Key}={v}");
+						parts.Add(string.IsNullOrEmpty(v) ? $"--{kv.Key}" : $"--{kv.Key}={v}");
 				parts.AddRange(_positional);
 				return string.Join(" ", parts);
 			}
@@ -174,7 +218,8 @@ namespace Nox.CCK.Utils {
 		}
 
 		/// <summary>Parses a single command-line string by splitting on spaces (respects quoted strings).</summary>
-		public static ParsedArgs Parse(string commandLine) => Parse(SplitCommandLine(commandLine));
+		public static ParsedArgs Parse(string commandLine) 
+			=> Parse(SplitCommandLine(commandLine));
 
 		// ── Utility ──────────────────────────────────────────────────────────
 
@@ -184,7 +229,7 @@ namespace Nox.CCK.Utils {
 			var inQuotes = false;
 			var quoteChar = '"';
 
-			foreach (var c in commandLine) {
+			foreach (var c in commandLine) 
 				if (c == '"' || c == '\'') {
 					if (inQuotes && c == quoteChar) { inQuotes = false; }
 					else if (!inQuotes) { inQuotes = true; quoteChar = c; }
@@ -194,7 +239,6 @@ namespace Nox.CCK.Utils {
 				} else {
 					current.Append(c);
 				}
-			}
 
 			if (current.Length > 0) args.Add(current.ToString());
 			return args.ToArray();
