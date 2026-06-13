@@ -10,9 +10,9 @@ namespace Nox.CCK.Attributes
     /// Tag-based marker for methods invoked via NoxInvokableAttribute.Invoke / InvokeAsync.
     /// </summary>
     /// <example>
-    /// [Nox("build:any")]  public static void MyBuildStep() { }
-    /// [Nox("build:mod")]  public static async UniTask MyAsyncStep() { }
-    /// [Nox("build:game")] public static bool MyCheck() => true;
+    /// [NoxInvokable("build:any")]  public static void MyBuildStep() { }
+    /// [NoxInvokable("build:mod")]  public static async UniTask MyAsyncStep() { }
+    /// [NoxInvokable("build:game")] public static bool MyCheck() => true;
     /// </example>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public class NoxInvokableAttribute : Attribute
