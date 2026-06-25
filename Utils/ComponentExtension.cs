@@ -29,6 +29,7 @@ namespace Nox.CCK.Utils {
 		public static bool IsActive(this Component component)
 			=> component && component.gameObject.IsActive();
 
+
 		public static T GetComponentInParents<T>(this GameObject gameObject, bool includeInactive = false) {
 			var parent = gameObject.transform;
 
@@ -195,8 +196,27 @@ namespace Nox.CCK.Utils {
 				return;
 			Object.DontDestroyOnLoad(gameObject);
 		}
-		
+
 		public static bool IsPrefab(this GameObject gameObject)
 			=> gameObject && !gameObject.scene.IsValid();
+
+		public static int GetId(this Object @object)
+			=> @object.GetEntityId().GetHashCode();
+
+		public static GameObject[] GetChilds(this GameObject gameObject) {
+			var count = gameObject.transform.childCount;
+			var childs = new GameObject[count];
+            for (var j = 0; j < count; j++)
+                childs[j] = gameObject.transform.GetChild(j).gameObject;
+			return childs;
+		}
+
+		public static Component[] GetComponents(this GameObject gameObject) {
+			var count = gameObject.GetComponentCount();
+			var components = new Component[count];
+            for (var j = 0; j < count; j++)
+                components[j] = gameObject.GetComponentAtIndex(j);
+			return components;
+		}
 	}
 }

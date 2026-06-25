@@ -530,7 +530,7 @@ namespace Nox.CCK.Utils {
 			if (string.IsNullOrEmpty(tag))
 				return 0xFFFFFF;
 
-			var hash = tag.GetHashCode();
+			var hash = Hash.CRC32(tag);
 			var r    = (hash & 0xFF0000) >> 16;
 			var g    = (hash & 0x00FF00) >> 8;
 			var b    = (hash & 0x0000FF);
