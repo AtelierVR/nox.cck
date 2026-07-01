@@ -3,30 +3,35 @@ using UnityEngine;
 using UGizmos = UnityEngine.Gizmos;
 
 namespace Nox.CCK.Development {
-	public class Gizmos {
+	public static class Gizmos {
 		// ── Capsule ──────────────────────────────────────────────────────
 		public static void DrawWireCapsule(Vector3 point1, Vector3 point2, float radius) {
+			DrawWireCapsule(point1, point2, radius, radius);
+		}
+
+		public static void DrawWireCapsule(Vector3 point1, Vector3 point2, float radius1, float radius2) {
 			#if UNITY_EDITOR
 			Vector3    upOffset    = point2 - point1;
 			Vector3    up          = upOffset.Equals(default) ? Vector3.up : upOffset.normalized;
 			Quaternion orientation = Quaternion.FromToRotation(Vector3.up, up);
 			Vector3    forward     = orientation * Vector3.forward;
 			Vector3    right       = orientation * Vector3.right;
-			Handles.DrawWireArc(point2, forward, right, 180, radius);
-			Handles.DrawWireArc(point1, forward, right, -180, radius);
-			Handles.DrawLine(point1 + right * radius, point2 + right * radius);
-			Handles.DrawLine(point1 - right * radius, point2 - right * radius);
-			Handles.DrawWireArc(point2, right, forward, -180, radius);
-			Handles.DrawWireArc(point1, right, forward, 180, radius);
-			Handles.DrawLine(point1 + forward * radius, point2 + forward * radius);
-			Handles.DrawLine(point1 - forward * radius, point2 - forward * radius);
-			Handles.DrawWireDisc(point2, up, radius);
-			Handles.DrawWireDisc(point1, up, radius);
+			// Bottom hemisphere (radius1)
+			Handles.DrawWireArc(point1, forward, right, -180, radius1);
+			Handles.DrawWireArc(point1, right, forward, 180, radius1);
+			// Top hemisphere (radius2)
+			Handles.DrawWireArc(point2, forward, right, 180, radius2);
+			Handles.DrawWireArc(point2, right, forward, -180, radius2);
+			// Connecting lines
+			Handles.DrawLine(point1 + right * radius1, point2 + right * radius2);
+			Handles.DrawLine(point1 - right * radius1, point2 - right * radius2);
+			Handles.DrawLine(point1 + forward * radius1, point2 + forward * radius2);
+			Handles.DrawLine(point1 - forward * radius1, point2 - forward * radius2);
 			#endif
 		}
 
 		// ── Color ────────────────────────────────────────────────────────
-		public static Color color {
+		public static Color Color {
 			#if UNITY_EDITOR
 			get => UGizmos.color;
 			set {
@@ -166,6 +171,27 @@ namespace Nox.CCK.Development {
 			if (direction == Vector3.zero)
 				return;
 			Handles.ArrowHandleCap(0, position, Quaternion.LookRotation(direction), size, EventType.Repaint);
+			#endif
+		}
+
+		// ── Cone ─────────────────────────────────────────────────────────
+		public static void DrawSolidCone(Vector3 apex, Vector3 direction, float angle, float length, int segments = 16) {
+			#if UNITY_EDITOR
+			if (angle <= 0f || length <= 0f) return;
+			var dir = direction.normalized;
+			var baseCenter = apex + dir * length;
+			var radius = Mathf.Tan(angle * 0.5f * Mathf.Deg2Rad) * length;
+			// Lateral triangles
+			var right = Vector3.Cross(dir, Vector3.up).normalized;
+			if (right.magnitude < 0.01f) right = Vector3.Cross(dir, Vector3.forward).normalized;
+			var forward = Vector3.Cross(right, dir).normalized;
+			for (int i = 0; i < segments; i++) {
+				float a0 = (float)i / segments * Mathf.PI * 2f;
+				float a1 = (float)(i + 1) / segments * Mathf.PI * 2f;
+				var p0 = baseCenter + (right * Mathf.Cos(a0) + forward * Mathf.Sin(a0)) * radius;
+				var p1 = baseCenter + (right * Mathf.Cos(a1) + forward * Mathf.Sin(a1)) * radius;
+				Handles.DrawAAConvexPolygon(apex, p0, p1);
+			}
 			#endif
 		}
 	}
