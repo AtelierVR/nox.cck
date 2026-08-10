@@ -12,7 +12,8 @@ namespace Nox.CCK.Utils {
 
 		public static string AppPath {
 			get {
-				var dir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/.nox/";
+				var dir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+					+ (PlatformExtensions.CurrentPlatform == Platform.Windows ? "/.nox/" : "/nox/");
 				if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 				return dir;
 			}

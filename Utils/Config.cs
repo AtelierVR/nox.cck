@@ -31,14 +31,30 @@ namespace Nox.CCK.Utils {
 			if (!File.Exists(GetPath()))
 				return new Config { _path = GetPath() }.Save();
 			var jsonString = File.ReadAllText(GetPath());
-			var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetPath() };
-			Current = config;
-			return config;
+			try {
+				var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetPath() };
+				Current = config;
+				return config;
+			} catch (JsonReaderException) {
+				var path = GetPath();
+				var backupPath = path + ".bak";
+				if (File.Exists(backupPath))
+					File.Delete(backupPath);
+				File.Move(path, backupPath);
+				Logger.LogWarning($"Corrupted config file backed up to {backupPath}, creating fresh default.", nameof(Config));
+				return new Config { _path = path }.Save();
+			}
 		}
 
 		#if UNITY_EDITOR
-		public static string GetEditorPath()
-			=> Path.Combine(Application.dataPath, "..", "Library", "NoxEditorConfig.json");
+		public static string GetEditorPath() {
+			var parsed = ArgsParser.Parse();
+			var editorConfigArg = parsed.Get("editor-config");
+			if (!string.IsNullOrEmpty(editorConfigArg))
+				return editorConfigArg;
+
+			return Path.Combine(Application.dataPath, "..", "Library", "NoxEditorConfig.json");
+		}
 
 		public static Config CurrentEditor;
 
