@@ -67,27 +67,22 @@ namespace Nox.CCK.Utils {
 
 			// ── Get array ────────────────────────────────────────────────────
 
-			public string[] GetArray(string key) 
-				=> _named.TryGetValue(Normalize(key), out var list) 
-					? list.ToArray() 
-					: Array.Empty<string>();
-
-			/// <summary>
-			/// Returns all values for a key, splitting on separator if present.
-			/// Example: --noxMod "nox.network,nox.cck" or --noxMod nox.network --noxMod nox.cck
-			/// </summary>
-			public List<string> GetList(string key, char separator = DEFAULT_SEPARATOR) {
+			public string[] GetArray(string key, char separator = '\0') {
+				if (!_named.TryGetValue(Normalize(key), out var list))
+					return Array.Empty<string>();
+				if (separator == '\0')
+					return list.ToArray();
 				var result = new List<string>();
-				foreach (var raw in GetArray(key))
-					if (separator != '\0' && raw.Contains(separator))
+				foreach (var raw in list)
+					if (raw.Contains(separator))
 						result.AddRange(raw.Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()));
 					else
 						result.Add(raw);
-				return result;
+				return result.ToArray();
 			}
 
-			public T[] GetArray<T>(string key) {
-				return GetArray(key)
+			public T[] GetArray<T>(string key, char separator = '\0') {
+				return GetArray(key, separator)
 					.Select(v => {
 						try { return ((T)Convert.ChangeType(v, typeof(T)), true); }
 						catch { return (default, false); }
@@ -127,7 +122,7 @@ namespace Nox.CCK.Utils {
 			public string[] Positional 
 				=> _positional.ToArray();
 
-			public string Positional_At(int index, string defaultValue = null)
+			public string GetPositional(int index, string defaultValue = null)
 				=> index >= 0 && index < _positional.Count ? _positional[index] : defaultValue;
 
 			// ── Raw ──────────────────────────────────────────────────────────
@@ -136,8 +131,11 @@ namespace Nox.CCK.Utils {
 
 			// ── Helpers ──────────────────────────────────────────────────────
 
-			private static string Normalize(string key)
-				=> key.TrimStart('-').ToLowerInvariant();
+			private static string Normalize(string key) {
+				var k = key.TrimStart('-');
+				// Short flags (-n, -N) are case-sensitive; long flags (--name) are lowercase
+				return k.Length == 1 ? k : k.ToLowerInvariant();
+			}
 
 			public override string ToString() {
 				var parts = new List<string>();
@@ -156,13 +154,13 @@ namespace Nox.CCK.Utils {
 
 		/// <summary>Parses a pre-split array of tokens.</summary>
 		public static ParsedArgs Parse(string[] args, int skip = 0) {
-			var named = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+			var named = new Dictionary<string, List<string>>();
 			var positional = new List<string>();
 
 			var tokens = args.Skip(skip).ToArray();
 
-			void AddNamed(string key, string value) {
-				var k = key.ToLowerInvariant();
+			void AddNamed(string key, string value, bool isLong = false) {
+				var k = isLong ? key.ToLowerInvariant() : key;
 				if (!named.TryGetValue(k, out var list)) named[k] = list = new List<string>();
 				list.Add(value);
 			}
@@ -175,20 +173,18 @@ namespace Nox.CCK.Utils {
 					var body = token.Substring(2);
 					var eq = body.IndexOf('=');
 					if (eq >= 0) {
-						// --key=value
-						AddNamed(body.Substring(0, eq), body.Substring(eq + 1).Trim('"'));
+						AddNamed(body.Substring(0, eq), body.Substring(eq + 1).Trim('"'), isLong: true);
 					} else {
-						// --key [value]
 						var nextIsValue = i + 1 < tokens.Length && !tokens[i + 1].StartsWith("-");
 						if (nextIsValue)
-							AddNamed(body, tokens[++i]);
+							AddNamed(body, tokens[++i], isLong: true);
 						else
-							AddNamed(body, string.Empty); // boolean flag
+							AddNamed(body, string.Empty, isLong: true);
 					}
 					continue;
 				}
 
-				// Short flag: -k, -k=value, -k value, -abc (multi-flag)
+				// Short flag: -k, -k=value, -k value, -Kvalue
 				if (token.StartsWith("-") && token.Length > 1) {
 					var body = token.Substring(1);
 					var eq = body.IndexOf('=');
@@ -203,7 +199,7 @@ namespace Nox.CCK.Utils {
 						else
 							AddNamed(body, string.Empty);
 					} else {
-						// -abc → -a -b -c (all boolean)
+						// -abc → multi boolean flags: -a -b -c
 						foreach (var c in body)
 							AddNamed(c.ToString(), string.Empty);
 					}
