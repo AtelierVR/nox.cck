@@ -111,8 +111,20 @@ namespace Nox.CCK.Utils {
 		/// <param name="title"></param>
 		/// <param name="message"></param>
 		/// <param name="progress"></param>
-		public static void ShowProgress(string title, string message, float progress) {
-			EditorUtility.DisplayProgressBar(title, message, progress);
+		/// <param name="background">If true, uses Unity's Background Tasks Progress API instead of a modal dialog.</param>
+		public static void ShowProgress(string title, string message, float progress, bool background = false) {
+			if (background) {
+				if (_progressId == -1)
+					_progressId = UnityEditor.Progress.Start(title, message, UnityEditor.Progress.Options.Managed);
+
+				if (progress < 0f)
+					UnityEditor.Progress.Report(_progressId, -1f, message);
+				else
+					UnityEditor.Progress.Report(_progressId, progress, message);
+			} else {
+				EditorUtility.DisplayProgressBar(title, message, progress);
+			}
+
 			OnProgress.Invoke(true, title, message, progress);
 		}
 
@@ -120,12 +132,19 @@ namespace Nox.CCK.Utils {
 		/// Clears the progress bar in the Editor.
 		/// </summary>
 		public static void ClearProgress() {
+			if (_progressId != -1) {
+				UnityEditor.Progress.Remove(_progressId);
+				_progressId = -1;
+			}
+
 			EditorUtility.ClearProgressBar();
 			OnProgress.Invoke(false, null, null, -1f);
 		}
 
+		private static int _progressId = -1;
+
 		#else
-		public static void ShowProgress(string title, string message, float progress)
+		public static void ShowProgress(string title, string message, float progress, bool background = false)
 			=> OnProgress.Invoke(true, title, message, progress);
 		
 		public static void ClearProgress()
