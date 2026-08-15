@@ -1,3 +1,5 @@
+using System;
+
 namespace Nox.CCK.Mods.Libs {
 	/// <summary>
 	/// Provides native plugin folder paths for the current mod.
@@ -47,6 +49,27 @@ namespace Nox.CCK.Mods.Libs {
 		/// </para>
 		/// <exception cref="DllNotFoundException">Thrown if the library is not found or fails to load.</exception>
 		void Load(string name);
+
+		/// <summary>
+		/// Loads the native library <paramref name="name"/> and returns its native module handle
+		/// (<c>IntPtr</c> as returned by <c>LoadLibrary</c>/<c>dlopen</c>).
+		/// This is the only API that physically loads native libraries; callers must not use
+		/// <c>DllImport</c> themselves.
+		/// <exception cref="DllNotFoundException">Thrown if the library is not found or fails to load.</exception>
+		IntPtr GetHandle(string name);
+
+		/// <summary>
+		/// Resolves the address of the native export <paramref name="symbol"/> from the library
+		/// <paramref name="name"/> (loading it first if needed). Returns <c>IntPtr.Zero</c> if not found.
+		/// </summary>
+		IntPtr GetSymbol(string name, string symbol);
+
+		/// <summary>
+		/// Resolves the native export <paramref name="symbol"/> from the library <paramref name="name"/>
+		/// and wraps it in a managed delegate of type <typeparamref name="T"/> (must be a delegate type).
+		/// This is the DllImport-free equivalent of calling an extern P/Invoke entry point.
+		/// <exception cref="EntryPointNotFoundException">Thrown if the symbol is not found.</exception>
+		T GetDelegate<T>(string name, string symbol) where T : Delegate;
 
 		/// <summary>
 		/// Unloads (reference-counted decrement) the native library <paramref name="name"/>.
