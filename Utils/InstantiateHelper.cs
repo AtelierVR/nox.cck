@@ -145,7 +145,11 @@ namespace Nox.CCK.Utils {
 
 			await UniTask.Yield(cancellationToken: cancellationToken);
 
-			var instance = (await Object.InstantiateAsync(prefab, parent).ToUniTask(
+			// Do NOT pass `parent` here: Object.InstantiateAsync would call
+			// SetParent(parent, worldPositionStays: true), which recalculates
+			// RectTransform local positions and introduces non-zero Z offsets.
+			// FixInstantiate handles parenting via SetParent(parent, false).
+			var instance = (await Object.InstantiateAsync(prefab).ToUniTask(
 				progress: progress,
 				cancellationToken: cancellationToken
 			)).FirstOrDefault();
