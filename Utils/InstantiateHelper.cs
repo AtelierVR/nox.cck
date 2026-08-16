@@ -159,16 +159,30 @@ namespace Nox.CCK.Utils {
 		}
 
 		private static void FixInstantiate(GameObject instance, GameObject prefab, Transform parent) {
+			// Handle UI rect transforms before touching world-space transforms:
+			// copying world position/rotation breaks layout placement for RectTransforms.
+			if (prefab.TryGetComponent<RectTransform>(out var pRect) && instance.TryGetComponent<RectTransform>(out var iRect)) {
+				if (parent)
+					iRect.SetParent(parent, false);
+				else instance.DontDestroyOnLoad();
+				iRect.localRotation   = pRect.localRotation;
+				iRect.localScale      = pRect.localScale;
+				iRect.anchorMin       = pRect.anchorMin;
+				iRect.anchorMax       = pRect.anchorMax;
+				iRect.pivot           = pRect.pivot;
+				iRect.anchoredPosition = pRect.anchoredPosition;
+				iRect.sizeDelta       = pRect.sizeDelta;
+				return;
+			}
+
 			if (parent)
 				instance.transform.SetParent(parent);
 			else instance.DontDestroyOnLoad();
-			instance.transform.position   = prefab.transform.position;
-			instance.transform.rotation   = prefab.transform.rotation;
+			instance.transform.SetLocalPositionAndRotation(
+				prefab.transform.localPosition,
+				prefab.transform.localRotation
+			);
 			instance.transform.localScale = prefab.transform.localScale;
-			if (!prefab.TryGetComponent<RectTransform>(out var pRect) || !instance.TryGetComponent<RectTransform>(out var iRect))
-				return;
-			iRect.sizeDelta        = pRect.sizeDelta;
-			iRect.anchoredPosition = pRect.anchoredPosition;
 		}
 	}
 }
