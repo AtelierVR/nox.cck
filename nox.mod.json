@@ -1,6 +1,7 @@
 {
   "type": "library",
   "id": "nox.cck",
+  "version": "1.0.x",
   "relations": [
     { "id": "com.cysharp.unitask", "type": "depends", "register": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask" },
     { "id": "com.unity.nuget.newtonsoft-json", "type": "depends", "register": "upm+com.unity.nuget.newtonsoft-json@3.2.2" },
