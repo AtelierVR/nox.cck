@@ -17,15 +17,13 @@ namespace Nox.CCK.Editor {
 			if (Root != null)
 				return Root;
 
-			// Charger le UXML
-			var visualTree = Resources.Load<VisualTreeAsset>("InspectorEditor");
-			Root = visualTree.CloneTree();
+			Root = Resources
+				.Load<VisualTreeAsset>("InspectorEditor")
+				.CloneTree();
 
 			Root.Q<Label>("header-label").text = Title;
-
 			Content = Root.Q<VisualElement>("content");
 
-			// Retourner l'élément racine
 			return Root;
 		}
 	}

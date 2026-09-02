@@ -248,5 +248,99 @@ namespace Nox.CCK {
 				),
 				_ => Quaternion.identity
 			};
+
+		// ===== Encodage big-endian vers byte[] (miroir des décodeurs ci-dessus) =====
+
+		private static byte[] ToBigEndianBytes(float value) {
+			var bytes = BitConverter.GetBytes(value);
+			if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
+			return bytes;
+		}
+
+		private static byte[] ToBigEndianBytes(double value) {
+			var bytes = BitConverter.GetBytes(value);
+			if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
+			return bytes;
+		}
+
+		private static byte[] Combine(params byte[][] arrays) {
+			var length = 0;
+			foreach (var array in arrays) length += array.Length;
+
+			var result = new byte[length];
+			var offset = 0;
+			foreach (var array in arrays) {
+				Buffer.BlockCopy(array, 0, result, offset, array.Length);
+				offset += array.Length;
+			}
+
+			return result;
+		}
+
+		public static byte[] ToBytes(this object value)
+			=> value switch {
+				string str   => Encoding.UTF8.GetBytes(str),
+				byte[] bytes => bytes,
+				bool b       => new[] { b ? (byte)1 : (byte)0 },
+				byte b       => new[] { b },
+				short s      => new[] { (byte)(s >> 8), (byte)s },
+				ushort us    => new[] { (byte)(us >> 8), (byte)us },
+				int i        => new[] {
+					(byte)(i >> 24), (byte)(i >> 16),
+					(byte)(i >> 8),  (byte)i
+				},
+				uint ui      => new[] {
+					(byte)(ui >> 24), (byte)(ui >> 16),
+					(byte)(ui >> 8),  (byte)ui
+				},
+				long l       => new[] {
+					(byte)(l >> 56), (byte)(l >> 48),
+					(byte)(l >> 40), (byte)(l >> 32),
+					(byte)(l >> 24), (byte)(l >> 16),
+					(byte)(l >> 8),  (byte)l
+				},
+				ulong ul     => new[] {
+					(byte)(ul >> 56), (byte)(ul >> 48),
+					(byte)(ul >> 40), (byte)(ul >> 32),
+					(byte)(ul >> 24), (byte)(ul >> 16),
+					(byte)(ul >> 8),  (byte)ul
+				},
+				float f      => ToBigEndianBytes(f),
+				double d     => ToBigEndianBytes(d),
+				Vector3 v    => Combine(
+					ToBigEndianBytes(v.x), 
+					ToBigEndianBytes(v.y), 
+					ToBigEndianBytes(v.z)
+				),
+				Quaternion q => Combine(
+					ToBigEndianBytes(q.x), 
+					ToBigEndianBytes(q.y), 
+					ToBigEndianBytes(q.z), 
+					ToBigEndianBytes(q.w)
+				),
+				_            => Array.Empty<byte>()
+			};
+
+		/// <summary>
+		/// Décode génériquement des octets big-endian vers le type demandé <typeparamref name="T"/>.
+		/// </summary>
+		public static T To<T>(this byte[] value)
+			=> typeof(T) switch {
+				Type t when t == typeof(bool)       => (T)(object)value.ToBool(),
+				Type t when t == typeof(byte)       => (T)(object)value.ToByte(),
+				Type t when t == typeof(short)      => (T)(object)value.ToShort(),
+				Type t when t == typeof(ushort)     => (T)(object)value.ToUShort(),
+				Type t when t == typeof(int)        => (T)(object)value.ToInt(),
+				Type t when t == typeof(uint)       => (T)(object)value.ToUInt(),
+				Type t when t == typeof(long)       => (T)(object)value.ToLong(),
+				Type t when t == typeof(ulong)      => (T)(object)value.ToULong(),
+				Type t when t == typeof(float)      => (T)(object)value.ToFloat(),
+				Type t when t == typeof(double)     => (T)(object)value.ToDouble(),
+				Type t when t == typeof(string)     => (T)(object)ToString(value),
+				Type t when t == typeof(byte[])     => (T)(object)value,
+				Type t when t == typeof(Vector3)    => (T)(object)value.ToVector3(),
+				Type t when t == typeof(Quaternion) => (T)(object)value.ToQuaternion(),
+				_ => throw new InvalidOperationException($"Unsupported type: {typeof(T)}")
+			};
 	}
 }
