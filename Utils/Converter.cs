@@ -322,6 +322,33 @@ namespace Nox.CCK {
 			};
 
 		/// <summary>
+		/// Encode des octets en chaîne Base64.
+		/// </summary>
+		public static string ToBase64(byte[] bytes)
+			=> bytes == null || bytes.Length == 0 
+				? string.Empty 
+				: Convert.ToBase64String(bytes);
+
+		/// <summary>
+		/// Décode une chaîne Base64 en octets.
+		/// Retourne <see langword="null"/> si la chaîne est vide ou n'est pas du Base64
+		/// valide (données legacy/corrompues), sans lever d'exception.
+		/// </summary>
+		public static byte[] FromBase64(string value)
+		{
+			if (string.IsNullOrEmpty(value))
+				return null;
+			try
+			{
+				return Convert.FromBase64String(value);
+			}
+			catch (FormatException)
+			{
+				return null;
+			}
+		}
+
+		/// <summary>
 		/// Décode génériquement des octets big-endian vers le type demandé <typeparamref name="T"/>.
 		/// </summary>
 		public static T To<T>(this byte[] value)
