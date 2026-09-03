@@ -96,7 +96,17 @@ namespace Nox.CCK.Utils {
 			else UnityEditor.EditorUtility.DisplayDialog("Nox Config", "No config file found.", "OK");
 		}
 
+		[UnityEditor.MenuItem("Nox/Config/Reload Config")]
+		private static void ReloadConfig() {
+			Load(force: true);
+			UnityEditor.EditorUtility.DisplayDialog("Nox Config", "Config reloaded.", "OK");
+		}
 
+		[UnityEditor.MenuItem("Nox/Config/Reload Editor Config")]
+		private static void ReloadEditorConfig() {
+			LoadEditor(force: true);
+			UnityEditor.EditorUtility.DisplayDialog("Nox Config", "Editor config reloaded.", "OK");
+		}
 		#endif
 
 		public bool Has(string propertyName)
