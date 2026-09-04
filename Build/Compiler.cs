@@ -54,13 +54,16 @@ namespace Nox.CCK.Build {
 						}
 
 						OnCompilableCompiled.Invoke(compilable, i, a.Length);
+
+						if (a.Length > 1)
+							await UniTask.Yield(cancellationToken: cancellationToken);
 					}
 
 					if (need.Count == 0)
 						break;
 
 					a = need.ToArray();
-					await UniTask.Yield();
+					await UniTask.Yield(cancellationToken: cancellationToken);
 				}
 			} catch (Exception e) {
 				Logger.LogError(new Exception("Compilation exception", e));
