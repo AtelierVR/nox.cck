@@ -28,15 +28,15 @@ namespace Nox.CCK.Utils {
 
 		public static Config Load(bool force = false) {
 			if (Current != null && !force) return Current;
-			if (!File.Exists(GetPath()))
-				return new Config { _path = GetPath() }.Save();
-			var jsonString = File.ReadAllText(GetPath());
+			var path = GetPath();
+			if (!File.Exists(path))
+				return new Config { _path = path }.Save();
+			var jsonString = File.ReadAllText(path);
 			try {
-				var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetPath() };
+				var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = path };
 				Current = config;
 				return config;
 			} catch (JsonReaderException) {
-				var path = GetPath();
 				var backupPath = path + ".bak";
 				if (File.Exists(backupPath))
 					File.Delete(backupPath);
@@ -60,10 +60,11 @@ namespace Nox.CCK.Utils {
 
 		public static Config LoadEditor(bool force = false) {
 			if (CurrentEditor != null && !force) return CurrentEditor;
-			if (!File.Exists(GetEditorPath()))
-				return new Config { _path = GetEditorPath() }.Save();
-			var jsonString = File.ReadAllText(GetEditorPath());
-			var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = GetEditorPath() };
+			var path = GetEditorPath();
+			if (!File.Exists(path))
+				return new Config { _path = path }.Save();
+			var jsonString = File.ReadAllText(path);
+			var config = new Config { _jsonObject = JObject.Parse(jsonString), _path = path };
 			CurrentEditor = config;
 			return config;
 		}
