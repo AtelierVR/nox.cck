@@ -69,41 +69,49 @@ namespace Nox.CCK.Utils {
 			return config;
 		}
 
-		[UnityEditor.MenuItem("Nox/Config/Edit Config")]
+		// La position d'un sous-menu dans "Nox/" est dérivée des priorités de ses enfants.
+		// Pour rester collé aux autres sous-menus Nox (priorité par défaut 1000), TOUTES
+		// les priorités d'ici doivent tenir dans [990, 1010] - sans quoi Nox/Config sort
+		// du bloc. Un écart de 11 (> 10) suffit à créer le séparateur entre les deux
+		// sections, tout en restant dans cette fenêtre.
+		private const int ConfigPriority       = 994;  // Edit Config, Reveal Config, Reload Config
+		private const int EditorConfigPriority = 1007; // Edit/Reveal/Reload Editor Config
+
+		[UnityEditor.MenuItem("Nox/Config/Edit Config", false, ConfigPriority)]
 		private static void EditConfig() {
 			if (File.Exists(GetPath()))
 				UnityEditor.EditorUtility.OpenWithDefaultApp(GetPath());
 			else UnityEditor.EditorUtility.DisplayDialog("Nox Config", "No config file found.", "OK");
 		}
 
-		[UnityEditor.MenuItem("Nox/Config/Reveal Config")]
+		[UnityEditor.MenuItem("Nox/Config/Reveal Config", false, ConfigPriority + 1)]
 		private static void OpenConfigFolder() {
 			if (File.Exists(GetPath()))
 				UnityEditor.EditorUtility.RevealInFinder(GetPath());
 			else UnityEditor.EditorUtility.DisplayDialog("Nox Config", "No config file found.", "OK");
 		}
 
-		[UnityEditor.MenuItem("Nox/Config/Edit Editor Config")]
+		[UnityEditor.MenuItem("Nox/Config/Reload Config", false, ConfigPriority + 2)]
+		private static void ReloadConfig() {
+			Load(force: true);
+			UnityEditor.EditorUtility.DisplayDialog("Nox Config", "Config reloaded.", "OK");
+		}
+
+		[UnityEditor.MenuItem("Nox/Config/Edit Editor Config", false, EditorConfigPriority)]
 		private static void EditEditorConfig() {
 			if (File.Exists(GetEditorPath()))
 				UnityEditor.EditorUtility.OpenWithDefaultApp(GetEditorPath());
 			else UnityEditor.EditorUtility.DisplayDialog("Nox Config", "No config file found.", "OK");
 		}
 
-		[UnityEditor.MenuItem("Nox/Config/Reveal Editor Config")]
+		[UnityEditor.MenuItem("Nox/Config/Reveal Editor Config", false, EditorConfigPriority + 1)]
 		private static void OpenEditorConfigFolder() {
 			if (File.Exists(GetEditorPath()))
 				UnityEditor.EditorUtility.RevealInFinder(GetEditorPath());
 			else UnityEditor.EditorUtility.DisplayDialog("Nox Config", "No config file found.", "OK");
 		}
 
-		[UnityEditor.MenuItem("Nox/Config/Reload Config")]
-		private static void ReloadConfig() {
-			Load(force: true);
-			UnityEditor.EditorUtility.DisplayDialog("Nox Config", "Config reloaded.", "OK");
-		}
-
-		[UnityEditor.MenuItem("Nox/Config/Reload Editor Config")]
+		[UnityEditor.MenuItem("Nox/Config/Reload Editor Config", false, EditorConfigPriority + 2)]
 		private static void ReloadEditorConfig() {
 			LoadEditor(force: true);
 			UnityEditor.EditorUtility.DisplayDialog("Nox Config", "Editor config reloaded.", "OK");

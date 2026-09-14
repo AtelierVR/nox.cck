@@ -128,7 +128,7 @@ namespace Nox.CCK.Language {
 		}
 
 		#if UNITY_EDITOR
-		[UnityEditor.MenuItem("Nox/Reload LanguageTexts")]
+		[UnityEditor.MenuItem("Nox/Tools/Reload LanguageTexts")]
 		public static void ReloadLanguageTexts()
 			=> UpdateTexts();		
 		#endif
