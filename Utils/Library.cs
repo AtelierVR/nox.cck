@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Nox.CCK.Utils {
@@ -21,39 +20,32 @@ namespace Nox.CCK.Utils {
 			=> GetExtension(PlatformExtensions.CurrentPlatform);
 
 		/// <summary>
-		/// Returns the prioritized list of plugin subfolder names for the given platform
-		/// and architecture, ordered from most specific to least.
-		/// Example for Windows x64: ["win64", "x86_64", "x64"]
+		/// Returns the prioritized list of plugin sub-paths for the given platform and architecture,
+		/// relative to the <c>Plugins</c> root, ordered from most specific to least:
+		/// <list type="number">
+		/// <item><description><c>&lt;platform&gt;/&lt;arch&gt;</c> — e.g. <c>windows/x64</c> (architecture-specific binaries)</description></item>
+		/// <item><description><c>&lt;platform&gt;</c> — e.g. <c>windows</c> (binaries shared by every architecture of that platform)</description></item>
+		/// <item><description><c>""</c> — the <c>Plugins</c> root itself (the "." fallback)</description></item>
+		/// </list>
+		/// Example for Windows x64: <c>["windows/x64", "windows", ""]</c>.
+		/// Callers compose the full path with <c>Path.Combine(pluginsRoot, subPath)</c>; the empty
+		/// sub-path resolves to <c>pluginsRoot</c> itself.
 		/// </summary>
 		public static string[] GetSubFolders(Platform platform, Architecture arch) {
 			var folders = new List<string>();
-
-			// 1. Platform-specific folder (e.g. "win64", "linux", "osx")
-			if (arch != Architecture.None) {
-				var archSuffix = arch switch {
-					Architecture.X86 => "32",
-					Architecture.X64 => "64",
-					_                => "",
-				};
-				var platformFolder = platform switch {
-					Platform.Windows  => "win" + archSuffix,
-					Platform.Linux    => "linux",
-					Platform.MacOS    => "osx",
-					Platform.Android  => "android",
-					Platform.IOS      => "ios",
-					Platform.VisionOS => "visionos",
-					_                 => null,
-				};
-				if (!string.IsNullOrEmpty(platformFolder))
-					folders.Add(platformFolder);
-			}
-
-			// 2. Architecture-only aliases (e.g. "x86_64", "x64")
-			if (arch == Architecture.X64)
-				folders.Add("x86_64");
+			var platformName = platform.GetPlatformName();
 			var archName = arch.GetArchitectureName();
-			if (!string.IsNullOrEmpty(archName))
-				folders.Add(archName);
+
+			// 1. Platform + architecture (e.g. "windows/x64", "linux/arm64")
+			if (!string.IsNullOrEmpty(platformName) && !string.IsNullOrEmpty(archName))
+				folders.Add(platformName + "/" + archName);
+
+			// 2. Platform only (e.g. "windows") — shared across all architectures
+			if (!string.IsNullOrEmpty(platformName))
+				folders.Add(platformName);
+
+			// 3. Root fallback (".") — architecture/platform agnostic
+			folders.Add("");
 
 			return folders.ToArray();
 		}

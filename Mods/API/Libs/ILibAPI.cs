@@ -4,8 +4,8 @@ namespace Nox.CCK.Mods.Libs {
 	/// <summary>
 	/// Provides native plugin folder paths for the current mod.
 	/// KernelMods and ExternalMods (FolderMods) expose different paths:
-	/// - KernelMod (build): Application.dataPath/Plugins/&lt;arch&gt;
-	/// - ExternalMod: &lt;modFolder&gt;/Plugins/&lt;arch&gt;
+	/// - KernelMod (build): Application.dataPath/Plugins/&lt;platform&gt;/&lt;arch&gt;
+	/// - ExternalMod: &lt;modFolder&gt;/Plugins/&lt;platform&gt;/&lt;arch&gt;
 	/// </summary>
 	public interface ILibAPI {
 		/// <summary>
@@ -26,9 +26,12 @@ namespace Nox.CCK.Mods.Libs {
 		string GetExtension();
 
 		/// <summary>
-		/// Returns the prioritized list of compatible plugin subfolder names for the current
-		/// platform and CPU architecture (e.g. ["win64", "x86_64", "x64"] on Windows x64).
-		/// These are used to compose search paths like Plugins/{subfolder}.
+		/// Returns the prioritized list of compatible plugin sub-paths (relative to the
+		/// <c>Plugins</c> root) for the current platform and CPU architecture, ordered from most
+		/// specific to least: <c>&lt;platform&gt;/&lt;arch&gt;</c> (e.g. <c>windows/x64</c>),
+		/// <c>&lt;platform&gt;</c> (e.g. <c>windows</c>), then <c>""</c> for the <c>Plugins</c>
+		/// root itself (the "." fallback).
+		/// These are used to compose search paths like <c>Plugins/{subPath}</c>.
 		/// </summary>
 		string[] GetSubFolders();
 
