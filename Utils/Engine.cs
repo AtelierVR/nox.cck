@@ -13,11 +13,20 @@ namespace Nox.CCK.Utils
             Display = display ?? name;
         }
 
-        public static Engine None   => new("none",   "None");
-        public static Engine Unity  => new("unity",  "Unity");
-        public static Engine Unreal => new("unreal", "Unreal");
-        public static Engine Godot  => new("godot",  "Godot");
-        public static Engine Source => new("source", "Source");
+        public static Engine None   
+            => new("none",   "None");
+
+        public static Engine Unity  
+            => new("unity",  "Unity");
+
+        public static Engine Unreal 
+            => new("unreal", "Unreal");
+
+        public static Engine Godot  
+            => new("godot",  "Godot");
+
+        public static Engine Source 
+            => new("source", "Source");
 
         public static Engine From(string name, string display = null)
             => new(name, display);

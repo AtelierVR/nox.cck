@@ -8,13 +8,12 @@ namespace Nox.CCK.Utils {
 		/// <summary>
 		/// Returns the library file extension for the given platform (e.g. ".dll", ".so", ".dylib").
 		/// </summary>
-		public static string GetExtension(Platform platform)
-			=> platform switch {
-				Platform.Windows => ".dll",
-				Platform.Linux   => ".so",
-				Platform.MacOS   => ".dylib",
-				_                => null,
-			};
+		public static string GetExtension(Platform platform) {
+			if (platform == Platform.Windows) return ".dll";
+			if (platform == Platform.Linux)   return ".so";
+			if (platform == Platform.MacOS)   return ".dylib";
+			return null;
+		}
 
         public static string CurrentLibraryExtension
 			=> GetExtension(PlatformExtensions.CurrentPlatform);
@@ -60,19 +59,7 @@ namespace Nox.CCK.Utils {
 		/// Infer the platform from a folder name (e.g. "win64" → Windows, "osx" → MacOS).
 		/// </summary>
 		public static Platform InferPlatform(string folder)
-			=> folder.ToLowerInvariant() switch {
-				"linux"                            => Platform.Linux,
-				"osx" or "macos" or "mac"          => Platform.MacOS,
-				"win" or "win32" or "win64" or "windows" => Platform.Windows,
-				"android"                          => Platform.Android,
-				"ios"                              => Platform.IOS,
-				"visionos" or "xros"               => Platform.VisionOS,
-				_                                  => Platform.None,
-			};
-
-		/// <summary>
-		/// Infer the architecture from a folder name (e.g. "win64" → X64, "win32" → X86).
-		/// </summary>
+            => folder.GetPlatformFromName();
 		public static Architecture InferArchitecture(string folder)
 			=> folder.ToLowerInvariant() switch {
 				"x86" or "win32"            => Architecture.X86,
