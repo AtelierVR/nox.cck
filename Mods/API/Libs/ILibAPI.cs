@@ -29,9 +29,11 @@ namespace Nox.CCK.Mods.Libs {
 		/// Returns the prioritized list of compatible plugin sub-paths (relative to the
 		/// <c>Plugins</c> root) for the current platform and CPU architecture, ordered from most
 		/// specific to least: <c>&lt;platform&gt;/&lt;arch&gt;</c> (e.g. <c>windows/x64</c>),
-		/// <c>&lt;platform&gt;</c> (e.g. <c>windows</c>), then <c>""</c> for the <c>Plugins</c>
-		/// root itself (the "." fallback).
-		/// These are used to compose search paths like <c>Plugins/{subPath}</c>.
+		/// <c>&lt;platform&gt;</c> (e.g. <c>windows</c>), the <c>&lt;arch&gt;</c> folder of a player
+		/// build (e.g. <c>x64</c>) and then <c>""</c> for the <c>Plugins</c> root itself (the "."
+		/// fallback).
+		/// These are used to compose search paths like <c>Plugins/{subPath}</c>. Directory suffixes
+		/// that do not exist on the current host are simply absent from the list.
 		/// </summary>
 		string[] GetSubFolders();
 
@@ -78,5 +80,6 @@ namespace Nox.CCK.Mods.Libs {
 		/// Unloads (reference-counted decrement) the native library <paramref name="name"/>.
 		/// The physical library is only unloaded when no mod references it anymore.
 		/// </summary>
-		void Unload(string name);			}
+		void Unload(string name);
+	}
 }

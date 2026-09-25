@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Nox.CCK.Utils {
@@ -54,6 +55,51 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		public static string[] CurrentSubFolders
 			=> GetSubFolders(PlatformExtensions.CurrentPlatform, ArchitectureExtensions.CurrentArchitecture);
+
+		/// <summary>
+		/// Unity's own plugin folder names inside a <i>player build</i>, relative to the build's
+		/// <c>&lt;dataPath&gt;/Plugins</c> folder, for the given platform and architecture.
+		/// <para>
+		/// Unity does not keep the editor's <c>&lt;platform&gt;/&lt;arch&gt;</c> layout in a build: it
+		/// flattens every native plugin into <c>&lt;dataPath&gt;/Plugins/&lt;arch&gt;</c> using its own
+		/// architecture names. Runtime code that looks for a plugin by walking
+		/// <c>Plugins/&lt;platform&gt;/&lt;arch&gt;</c> (see <see cref="GetPluginSubFolders"/>) therefore
+		/// has to probe these names as well, otherwise the binaries shipped by a mod
+		/// (<c>&lt;mod&gt;/Plugins/windows/x64/foo.dll</c>) are never found in a player.</para>
+		/// <para>macOS is not covered: its plugins live in <c>&lt;app&gt;.app/Contents/PlugIns</c>, i.e.
+		/// outside <c>Application.dataPath</c>.</para>
+		/// </summary>
+		public static string[] GetRuntimePluginFolders(Platform platform, Architecture arch) {
+			if (platform != Platform.Windows && platform != Platform.Linux)
+				return Array.Empty<string>();
+
+			var name = arch.GetArchitectureName();
+			return string.IsNullOrEmpty(name) ? Array.Empty<string>() : new[] { name };
+		}
+
+		/// <summary>
+		/// Full ordered list of sub-paths (relative to a <c>Plugins</c> root) where a native binary may
+		/// live on the current platform, most specific first: <c>&lt;platform&gt;/&lt;arch&gt;</c>,
+		/// <c>&lt;platform&gt;</c>, the <c>&lt;arch&gt;</c> folder of a player build
+		/// (see <see cref="GetRuntimePluginFolders"/>), then <c>""</c> for the root itself.
+		/// Example on Windows x64: <c>["windows/x64", "windows", "x64", ""]</c>.
+		/// </summary>
+		public static string[] GetPluginSubFolders(Platform platform, Architecture arch) {
+			var folders = new List<string>(GetSubFolders(platform, arch));
+			var runtime = GetRuntimePluginFolders(platform, arch);
+
+			// Keep the empty (root) entry last: it is the last-resort fallback.
+			if (runtime.Length > 0)
+				folders.InsertRange(folders.Count - 1, runtime);
+
+			return folders.ToArray();
+		}
+
+		/// <summary>
+		/// Shortcut for <see cref="GetPluginSubFolders"/> with the current platform and architecture.
+		/// </summary>
+		public static string[] CurrentPluginSubFolders
+			=> GetPluginSubFolders(PlatformExtensions.CurrentPlatform, ArchitectureExtensions.CurrentArchitecture);
 
 		/// <summary>
 		/// Infer the platform from a folder name (e.g. "win64" → Windows, "osx" → MacOS).
