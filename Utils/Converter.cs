@@ -349,6 +349,33 @@ namespace Nox.CCK {
 		}
 
 		/// <summary>
+		/// Convertit une valeur quelconque vers le type demandé <typeparamref name="T"/>
+		/// (valeur par défaut du type quand la conversion n'est pas supportée).
+		/// </summary>
+		public static T To<T>(this object value)
+		{
+			if (value is T typed)
+				return typed;
+
+			return typeof(T) switch {
+				Type t when t == typeof(bool)       => (T)(object)value.ToBool(),
+				Type t when t == typeof(byte)       => (T)(object)value.ToByte(),
+				Type t when t == typeof(short)      => (T)(object)value.ToShort(),
+				Type t when t == typeof(ushort)     => (T)(object)value.ToUShort(),
+				Type t when t == typeof(int)        => (T)(object)value.ToInt(),
+				Type t when t == typeof(uint)       => (T)(object)value.ToUInt(),
+				Type t when t == typeof(long)       => (T)(object)value.ToLong(),
+				Type t when t == typeof(ulong)      => (T)(object)value.ToULong(),
+				Type t when t == typeof(float)      => (T)(object)value.ToFloat(),
+				Type t when t == typeof(double)     => (T)(object)value.ToDouble(),
+				Type t when t == typeof(string)     => (T)(object)ToString(value),
+				Type t when t == typeof(Vector3)    => (T)(object)value.ToVector3(),
+				Type t when t == typeof(Quaternion) => (T)(object)value.ToQuaternion(),
+				_                                   => default
+			};
+		}
+
+		/// <summary>
 		/// Décode génériquement des octets big-endian vers le type demandé <typeparamref name="T"/>.
 		/// </summary>
 		public static T To<T>(this byte[] value)
