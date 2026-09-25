@@ -9,45 +9,99 @@ using UnityEditor;
 
 namespace Nox.CCK.Utils
 {
-    public enum Platform : byte
+    public readonly struct Platform : IEquatable<Platform>
     {
-        None = 0,
-        Windows = 1,
-        Linux = 2,
-        MacOS = 3,
-        Android = 4,
-        IOS = 5,
-        VisionOS = 6,
+        public string Name    { get; }
+        public string Display { get; }
+
+        private Platform(string name, string display) {
+            Name    = name;
+            Display = display ?? name;
+        }
+
+        public static Platform None     
+            => new("none",     "None");
+
+        public static Platform Windows  
+            => new("windows",  "Windows");
+
+        public static Platform Linux    
+            => new("linux",    "Linux");
+
+        public static Platform MacOS    
+            => new("macos",    "macOS");
+
+        public static Platform Android  
+            => new("android",  "Android");
+
+        public static Platform IOS      
+            => new("ios",      "iOS");
+
+        public static Platform VisionOS 
+            => new("visionos", "visionOS");
+
+        public static Platform From(string name, string display = null)
+            => new(name, display);
+
+        /// <summary>
+        /// Clé de comparaison et de persistance. <c>default(Platform)</c> (aucun nom : valeur d'un
+        /// asset non encore migré) est volontairement assimilé à <see cref="None"/> afin de conserver
+        /// la sémantique de l'ancien <c>enum Platform</c> où <c>None == 0</c>. Jamais <c>null</c>.
+        /// </summary>
+        public string Key
+            => string.IsNullOrEmpty(Name) ? None.Name : Name;
+
+        public bool Equals(Platform other)
+            => string.Equals(Key, other.Key, StringComparison.OrdinalIgnoreCase);
+
+        public override bool Equals(object obj)
+            => obj is Platform other && Equals(other);
+
+        public override int GetHashCode()
+            => Key.ToLowerInvariant().GetHashCode();
+
+        public override string ToString()
+            => Display;
+
+        public static bool operator ==(Platform a, Platform b) => a.Equals(b);
+        public static bool operator !=(Platform a, Platform b) => !a.Equals(b);
     }
 
     public static class PlatformExtensions
     {
         public static Platform[] All
-            => (Platform[])Enum.GetValues(typeof(Platform));
+            => new[]
+            {
+                Platform.None, Platform.Windows, Platform.Linux, Platform.MacOS,
+                Platform.Android, Platform.IOS, Platform.VisionOS,
+            };
 
         public static string GetPlatformName(this Platform platform)
-            => platform switch
-            {
-                Platform.Windows => "windows",
-                Platform.Linux => "linux",
-                Platform.MacOS => "macos",
-                Platform.Android => "android",
-                Platform.IOS => "ios",
-                Platform.VisionOS => "visionos",
-                _ => null,
-            };
+            => platform.Name;
 
-        public static Platform GetPlatformFromName(this string name)
-            => name switch
-            {
-                "windows" => Platform.Windows,
-                "linux" => Platform.Linux,
-                "macos" => Platform.MacOS,
-                "android" => Platform.Android,
-                "ios" => Platform.IOS,
-                "visionos" => Platform.VisionOS,
+        /// <summary>
+        /// Convertit en <see cref="Platform"/> une chaîne : un nom, un alias (<c>windows</c>,
+        /// <c>win64</c>, <c>osx</c>, <c>mac</c>, <c>xros</c>…), un libellé affiché
+        /// (<see cref="Platform.Display"/>) ou, pour les scènes/prefabs antérieurs au passage de
+        /// l'<c>enum Platform</c>, son ancien identifiant (<c>"0"</c> = None … <c>"6"</c> = VisionOS,
+        /// dans l'ordre de <see cref="All"/>). Toute valeur inconnue donne <see cref="Platform.None"/> :
+        /// les plateformes forment un ensemble fermé, contrairement aux moteurs (<see cref="Engine.From"/>).
+        /// </summary>
+        public static Platform GetPlatformFromName(this string target) {
+            if (string.IsNullOrEmpty(target)) return Platform.None;
+
+            foreach (var platform in All) // noms canoniques et libellés affichés
+                if (platform.Name.Equals(target, StringComparison.OrdinalIgnoreCase)
+                    || platform.Display.Equals(target, StringComparison.OrdinalIgnoreCase))
+                    return platform;
+
+            return target.ToLowerInvariant() switch { // alias
+                "win" or "win32" or "win64" => Platform.Windows,
+                "osx" or "mac" => Platform.MacOS,
+                "xros" => Platform.VisionOS,
                 _ => Platform.None,
             };
+        }
 
         public static Platform CurrentPlatform
         {
@@ -85,13 +139,12 @@ namespace Nox.CCK.Utils
             return Platform.None;
         }
 
-		public static OSPlatform GetOSPlatform(this Platform platform)
-			=> platform switch {
-				Platform.Windows => OSPlatform.Windows,
-				Platform.Linux => OSPlatform.Linux,
-				Platform.MacOS => OSPlatform.OSX,
-				_ => default,
-			};
+        public static OSPlatform GetOSPlatform(this Platform platform) {
+            if (platform == Platform.Windows) return OSPlatform.Windows;
+            if (platform == Platform.Linux)   return OSPlatform.Linux;
+            if (platform == Platform.MacOS)   return OSPlatform.OSX;
+            return default;
+        }
 
         public static Platform GetPlatform(this URuntimePlatform target)
             => target switch
@@ -129,17 +182,15 @@ namespace Nox.CCK.Utils
                 _ => Platform.None,
             };
 
-        public static BuildTarget GetBuildTarget(this Platform platform)
-            => platform switch
-            {
-                Platform.Windows => BuildTarget.StandaloneWindows64,
-                Platform.Linux => BuildTarget.StandaloneLinux64,
-                Platform.MacOS => BuildTarget.StandaloneOSX,
-                Platform.Android => BuildTarget.Android,
-                Platform.IOS => BuildTarget.iOS,
-                Platform.VisionOS => BuildTarget.VisionOS,
-                _ => BuildTarget.NoTarget,
-            };
+        public static BuildTarget GetBuildTarget(this Platform platform) {
+            if (platform == Platform.Windows)  return BuildTarget.StandaloneWindows64;
+            if (platform == Platform.Linux)    return BuildTarget.StandaloneLinux64;
+            if (platform == Platform.MacOS)    return BuildTarget.StandaloneOSX;
+            if (platform == Platform.Android)  return BuildTarget.Android;
+            if (platform == Platform.IOS)      return BuildTarget.iOS;
+            if (platform == Platform.VisionOS) return BuildTarget.VisionOS;
+            return BuildTarget.NoTarget;
+        }
 
         private static bool IsSupported(this BuildTarget target)
             => BuildPipeline.IsBuildTargetSupported(BuildPipeline.GetBuildTargetGroup(target), target);
