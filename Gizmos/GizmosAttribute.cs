@@ -9,7 +9,7 @@ namespace Nox.CCK.Development
         {
             List<string> Tags = new();
             foreach (var tag in tags)
-                if (string.IsNullOrEmpty(tag) && !Tags.Contains(tag))
+                if (!string.IsNullOrEmpty(tag) && !Tags.Contains(tag))
                     Tags.Add(tag);
             this.Tags = Tags.ToArray();
         }
