@@ -28,8 +28,8 @@ namespace Nox.CCK.Convertors {
 		/// text is <c>null</c>. A single translation is written as a plain string on the wire.
 		/// </summary>
 		public static TranslatedString ToTranslated(this string value, string language = null)
-			=> value == null
-				? null
-				: new TranslatedString { [language ?? LanguageManager.FallbackLanguage] = value };
+			=> value != null
+				? new TranslatedString { [language ?? LanguageManager.FallbackLanguage] = value }
+				: null;
 	}
 }
