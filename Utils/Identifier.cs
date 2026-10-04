@@ -14,7 +14,15 @@ namespace Nox.CCK.Utils {
 	/// [type:][id][?key=value[&amp;key=value...]][@server]
 	/// </summary>
 	public readonly struct Identifier : IEquatable<Identifier> {
+		/// <summary>
+		/// An identifier that carries no value, equivalent to <c>null</c>.
+		/// </summary>
 		public static readonly Identifier Invalid = new(null, 0u, null, null);
+
+		/// <summary>
+		/// The default (unset) identifier, used as a "no change" sentinel.
+		/// </summary>
+		public static readonly Identifier Default = default;
 
 		public const string LOCAL_SERVER = "::";
 
@@ -180,8 +188,10 @@ namespace Nox.CCK.Utils {
 		public bool Equals(Identifier other)
 			=> IsValid() == other.IsValid()
 				&& (string.IsNullOrEmpty(Type) || string.IsNullOrEmpty(other.Type) || Type.Equals(other.Type))
-				&& StringId.Equals(other.StringId)
-				&& (Server.Equals(LOCAL_SERVER) || other.Server.Equals(LOCAL_SERVER) || Server.Equals(other.Server));
+				&& string.Equals(StringId, other.StringId, StringComparison.Ordinal)
+				&& (string.Equals(Server, LOCAL_SERVER, StringComparison.Ordinal)
+					|| string.Equals(other.Server, LOCAL_SERVER, StringComparison.Ordinal)
+					|| string.Equals(Server, other.Server, StringComparison.Ordinal));
 
 		public bool IsValid()
 			=> Id switch {
