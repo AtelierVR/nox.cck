@@ -7,7 +7,7 @@ namespace Nox.CCK.Convertors
 {
     public abstract class DictionnaryOrStringConverter<T> : JsonConverter<T> where T : Dictionary<string, string>
     {
-        public const string DefaultKey = "default";
+        public const string DEFAULT_KEY = "default";
 
         private readonly string _defaultKey;
         protected readonly StringComparer _comparer;
@@ -24,8 +24,8 @@ namespace Nox.CCK.Convertors
             _comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         }
 
-        protected virtual string GetDefaultKey()
-            => _defaultKey ?? DefaultKey;
+        protected virtual string DefaultKey
+            => _defaultKey ?? DEFAULT_KEY;
 
         protected abstract T CreateEmpty();
         protected abstract T CreateEmpty(StringComparer comparer);
@@ -55,7 +55,7 @@ namespace Nox.CCK.Convertors
             {
                 case JsonToken.String:
                     var result = CreateEmpty(_comparer);
-                    result.Add(GetDefaultKey(), (string)reader.Value);
+                    result.Add(DefaultKey, (string)reader.Value);
                     return result;
                 case JsonToken.StartObject:
                     return serializer.Deserialize<T>(reader);

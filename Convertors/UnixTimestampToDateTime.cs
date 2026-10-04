@@ -3,20 +3,30 @@ using Newtonsoft.Json;
 namespace Nox.CCK.Convertors {
 	/// <summary>
 	/// Converts a Unix timestamp (in milliseconds) to a DateTime object and vice versa.
+	/// <c>null</c> (and an unset date when writing) maps to <see cref="DateTime.MinValue"/>,
+	/// the invalid date used for missing timestamps.
 	/// </summary>
 	public class UnixTimestampToDateTime : JsonConverter<DateTime> {
 
 		/// <summary>
 		/// Converts a DateTime object to a Unix timestamp (in milliseconds) and writes it to the JSON writer.
+		/// An unset date is written as <c>null</c>.
 		/// </summary>
 		/// <param name="writer"></param>
 		/// <param name="value"></param>
 		/// <param name="serializer"></param>
-		public override void WriteJson(JsonWriter writer, DateTime value, JsonSerializer serializer)
-			=> writer.WriteValue(new DateTimeOffset(value).ToUnixTimeMilliseconds());
+		public override void WriteJson(JsonWriter writer, DateTime value, JsonSerializer serializer) {
+			if (value == default) {
+				writer.WriteNull();
+				return;
+			}
+
+			writer.WriteValue(new DateTimeOffset(value).ToUnixTimeMilliseconds());
+		}
 
 		/// <summary>
 		/// Converts a Unix timestamp (in milliseconds) from the JSON reader to a DateTime object.
+		/// A missing value gives <see cref="DateTime.MinValue"/> instead of throwing.
 		/// </summary>
 		/// <param name="reader"></param>
 		/// <param name="objectType"></param>
@@ -27,9 +37,12 @@ namespace Nox.CCK.Convertors {
 		/// <exception cref="JsonSerializationException"></exception>
 		public override DateTime ReadJson(JsonReader reader, Type objectType, DateTime existingValue, bool hasExistingValue, JsonSerializer serializer)
 			=> reader.TokenType switch {
-				JsonToken.Integer => DateTimeOffset.FromUnixTimeMilliseconds((long)reader.Value!).UtcDateTime,
-				JsonToken.Float   => DateTimeOffset.FromUnixTimeMilliseconds((long)(double)reader.Value!).UtcDateTime,
-				_                 => throw new JsonSerializationException("Invalid token type for DateTime")
+				JsonToken.Null      => default,
+				JsonToken.Undefined => default,
+				JsonToken.Integer   => DateTimeOffset.FromUnixTimeMilliseconds((long)reader.Value!).UtcDateTime,
+				JsonToken.Float     => DateTimeOffset.FromUnixTimeMilliseconds((long)(double)reader.Value!).UtcDateTime,
+				JsonToken.Date      => ((DateTime)reader.Value!).ToUniversalTime(),
+				_                   => throw new JsonSerializationException("Invalid token type for DateTime")
 			};
 	}
 }

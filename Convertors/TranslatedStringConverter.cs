@@ -1,14 +1,17 @@
 using System;
-using Newtonsoft.Json;
 
 namespace Nox.CCK.Convertors {
 	public class TranslatedStringConverter : DictionnaryOrStringConverter<TranslatedString> {
 		public TranslatedStringConverter() : base(null, StringComparer.OrdinalIgnoreCase) { }
 
-		protected override string GetDefaultKey() => Language.LanguageManager.FallbackLanguage;
+		protected override string DefaultKey
+			=> Language.LanguageManager.FallbackLanguage;
 
-		protected override TranslatedString CreateEmpty() => new TranslatedString();
-		protected override TranslatedString CreateEmpty(StringComparer comparer) => new TranslatedString();
+		protected override TranslatedString CreateEmpty() 
+			=> new();
+
+		protected override TranslatedString CreateEmpty(StringComparer comparer) 
+			=> new();
 	}
 
 	/// <summary>

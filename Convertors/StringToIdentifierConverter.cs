@@ -18,7 +18,8 @@ namespace Nox.CCK.Convertors {
 			=> writer.WriteValue(value.ToString());
 
 		/// <summary>
-		/// Reads the JSON representation of a string and converts it back to an Identifier object.
+		/// Reads the JSON representation of a string (or a raw numeric id) and converts it back to
+		/// an Identifier object.
 		/// </summary>
 		/// <param name="reader"></param>
 		/// <param name="objectType"></param>
@@ -29,10 +30,12 @@ namespace Nox.CCK.Convertors {
 		/// <exception cref="JsonSerializationException"></exception>
 		public override Identifier ReadJson(JsonReader reader, Type objectType, Identifier existingValue, bool hasExistingValue, JsonSerializer serializer)
 			=> reader.TokenType switch {
-				JsonToken.String => Identifier.Parse((string)reader.Value!),
-				JsonToken.Null   => Identifier.Invalid,
-				JsonToken.None   => Identifier.Invalid,
-				_                => throw new JsonSerializationException("Invalid token type for Identifier")
+				JsonToken.String  => Identifier.Parse((string)reader.Value!),
+				JsonToken.Integer => Identifier.Parse(reader.Value!.ToString()),
+				JsonToken.Float   => Identifier.Parse(reader.Value!.ToString()),
+				JsonToken.Null    => Identifier.Invalid,
+				JsonToken.None    => Identifier.Invalid,
+				_                 => throw new JsonSerializationException("Invalid token type for Identifier")
 			};
 	}
 }
