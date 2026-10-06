@@ -1,0 +1,71 @@
+/* Inline badges and status dots — shared by the Nox editor panels. */
+
+.badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: var(--margin-small);
+    border-width: var(--border-width);
+    border-color: var(--border-color);
+    border-radius: var(--boder-radius);
+    background-color: rgba(120, 120, 120, 0.25);
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+}
+
+.badge-sm {
+    font-size: 9px;
+    padding: 0 4px;
+}
+
+.badge-info {
+    background-color: var(--info-background);
+    border-color: var(--info-border);
+    color: var(--info-text);
+}
+
+.badge-success {
+    background-color: var(--success-background);
+    border-color: var(--success-border);
+    color: var(--success-text);
+}
+
+.badge-warning {
+    background-color: var(--warning-background);
+    border-color: var(--warning-border);
+    color: var(--warning-text);
+}
+
+.badge-danger {
+    background-color: var(--error-background);
+    border-color: var(--error-border);
+    color: var(--error-text);
+}
+
+.badge-muted {
+    background-color: rgba(120, 120, 120, 0.15);
+    opacity: 0.75;
+}
+
+/* --- Status dot ---------------------------------------------------------- */
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    margin-right: var(--margin-small);
+    flex-shrink: 0;
+    background-color: var(--color-gray-500);
+}
+
+.status-dot.is-on {
+    background-color: var(--color-green-500);
+}
+
+.status-dot.is-off {
+    background-color: var(--color-red-500);
+}
+
+.status-dot.is-idle {
+    background-color: var(--color-gray-500);
+}

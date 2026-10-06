@@ -18,6 +18,7 @@
 
 @import "large.uss";
 @import "notification.uss";
+@import "badge.uss";
 @import "list.uss";
 @import "section.uss";
 
