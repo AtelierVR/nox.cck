@@ -25,3 +25,48 @@
     background-color: var(--success-background);
     color: var(--success-text);
 }
+
+/* Barre récapitulative des notifications (Publisher) : une icône + un nombre par type,
+   items centrés horizontalement. Les items à zéro sont masqués côté code. */
+.notification-summary {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.notification-summary > .summary-item {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.notification-summary > .summary-item > .icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.notification-summary > .summary-item.error > .icon {
+    background-image: resource('icons/error');
+    -unity-background-image-tint-color: rgb(200, 50, 50);
+}
+
+.notification-summary > .summary-item.warning > .icon {
+    background-image: resource('icons/warning');
+    -unity-background-image-tint-color: rgb(200, 151, 10);
+}
+
+.notification-summary > .summary-item.info > .icon {
+    background-image: resource('icons/info');
+    -unity-background-image-tint-color: rgb(100, 160, 240);
+}
+
+.notification-summary > .summary-item.success > .icon {
+    background-image: resource('icons/success');
+    -unity-background-image-tint-color: rgb(58, 171, 58);
+}
