@@ -194,5 +194,50 @@ namespace Nox.CCK.Development {
 			}
 			#endif
 		}
+
+		// ── Ranges ───────────────────────────────────────────────────────
+		/// <summary>Radial range: a wire sphere of the given radius.</summary>
+		public static void DrawRange(Vector3 center, float radius) {
+			#if UNITY_EDITOR
+			if (radius > 0f)
+				UGizmos.DrawWireSphere(center, radius);
+			#endif
+		}
+
+		/// <summary>Angular range around <paramref name="direction"/>: bounding lines, cap disc and apex.</summary>
+		public static void DrawAngleRange(Vector3 position, Vector3 direction, float angle, float radius) {
+			#if UNITY_EDITOR
+			if (direction.sqrMagnitude < 1e-8f || angle <= 0f || radius <= 0f)
+				return;
+
+			var dir   = direction.normalized;
+			var right = Vector3.Cross(dir, Vector3.up);
+			if (right.sqrMagnitude < 1e-8f)
+				right = Vector3.Cross(dir, Vector3.forward);
+			right.Normalize();
+
+			float half      = angle * 0.5f;
+			var   capCentre = position + dir * (Mathf.Cos(half * Mathf.Deg2Rad) * radius);
+			var   capRadius = Mathf.Sin(half * Mathf.Deg2Rad) * radius;
+
+			Handles.DrawWireDisc(capCentre, dir, capRadius);
+			Handles.DrawLine(position, position + (Quaternion.AngleAxis( half, right) * dir) * radius);
+			Handles.DrawLine(position, position + (Quaternion.AngleAxis(-half, right) * dir) * radius);
+			#endif
+		}
+
+		/// <summary>
+		/// Side indicator (VRChat-like): a circle on the plane plus a solid cone towards
+		/// <paramref name="normal"/>.
+		/// </summary>
+		public static void DrawSideRange(Vector3 position, Vector3 normal, float radius) {
+			#if UNITY_EDITOR
+			if (radius <= 0f)
+				return;
+			var n = normal.sqrMagnitude < 1e-8f ? Vector3.up : normal.normalized;
+			Handles.DrawWireDisc(position, n, radius);
+			DrawSolidCone(position, n, 90f, radius);
+			#endif
+		}
 	}
 }
