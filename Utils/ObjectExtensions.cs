@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using UnityEngine;
 
 namespace Nox.CCK.Utils {
 	/// <summary>
@@ -27,7 +26,7 @@ namespace Nox.CCK.Utils {
 				ushort us            => us.ToString(CultureInfo.InvariantCulture) + "us",
 				byte by              => by.ToString(CultureInfo.InvariantCulture) + "b",
 				sbyte sb             => sb.ToString(CultureInfo.InvariantCulture) + "sb",
-				UnityEngine.Object o => $"{o.name} ({o.GetEntityId().GetHashCode()})",
+				UnityEngine.Object o => $"{o.name} ({o.GetId()})",
                 _ when value.GetType().IsArray => ToVisualStringArray(value as Array),
 				_                   => $"{value} <{value.GetType().Name}>"
 			};
