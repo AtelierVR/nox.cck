@@ -5,8 +5,11 @@ using System.Linq;
 using Nox.CCK.Utils;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 using Logger = Nox.CCK.Utils.Logger;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Nox.CCK.Language {
 	public class LanguageManager {
@@ -33,24 +36,65 @@ namespace Nox.CCK.Language {
 
 		private static readonly List<LanguagePack> LanguagePacks = new();
 
-		public static LanguagePack[] GetPacks() {
+		private static List<LanguagePack> _packs;
+
+
+		static LanguageManager() {
 			#if UNITY_EDITOR
-			if (!Application.isPlaying) {
-				var guids = UnityEditor.AssetDatabase.FindAssets("t:LanguagePack");
-				var packs = new List<LanguagePack>();
-				foreach (var guid in guids)
-					try {
-						var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-						var pack = UnityEditor.AssetDatabase.LoadAssetAtPath<LanguagePack>(path);
-						if (pack) packs.Add(pack);
-					} catch (Exception e) {
-						Logger.LogError(e);
-					}
-				return packs.ToArray();
-			}
+			// The list below comes from the project (AssetDatabase, out of Play mode) and from the packs registered
+			// by the running mods: it is cached, so it is dropped whenever one of the two changes.
+			EditorApplication.projectChanged += InvalidatePacks;
+			EditorApplication.playModeStateChanged += _ => InvalidatePacks();
 			#endif
-			return LanguagePacks.ToArray();
 		}
+
+		/// <summary>
+		/// Packs the entries are resolved in: the ones registered by the mods, then, out of Play mode, the ones
+		/// authored in the project. Cached, because a lookup happens for every text of every panel.
+		/// </summary>
+		private static List<LanguagePack> GetPacksList() {
+			if (_packs != null)
+				return _packs;
+
+			var packs = new List<LanguagePack>();
+			AddAlive(packs, LanguagePacks);
+			#if UNITY_EDITOR
+			// No mod registered anything out of Play mode: the project packs are the AssetDatabase ones. While
+			// playing, each mod registers its own (see its main entrypoint), so nothing is scanned here.
+			if (!Application.isPlaying)
+				AddAlive(packs, EditorPacks());
+			#endif
+			return _packs = packs;
+		}
+
+		private static void AddAlive(List<LanguagePack> packs, List<LanguagePack> source) {
+			foreach (var pack in source)
+				if (pack && !packs.Contains(pack))
+					packs.Add(pack);
+		}
+
+		private static void InvalidatePacks()
+			=> _packs = null;
+
+		#if UNITY_EDITOR
+		/// <summary>Packs authored in the project, read from the AssetDatabase (editor, out of Play mode).</summary>
+		private static List<LanguagePack> EditorPacks() {
+			var packs = new List<LanguagePack>();
+			foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(LanguagePack)}"))
+				try {
+					var path = AssetDatabase.GUIDToAssetPath(guid);
+					var pack = AssetDatabase.LoadAssetAtPath<LanguagePack>(path);
+					if (pack && !packs.Contains(pack)) packs.Add(pack);
+				} catch (Exception e) {
+					Logger.LogError(e);
+				}
+
+			return packs;
+		}
+		#endif
+
+		public static LanguagePack[] GetPacks()
+			=> GetPacksList().ToArray();
 
 		public static string[] GetAvailableLanguages() {
 			var languages = new List<string>();
@@ -171,6 +215,7 @@ namespace Nox.CCK.Language {
 				.ToArray();
 			pack.InvalidateIndex();
 			LanguagePacks.Add(pack);
+			InvalidatePacks();
 			OnPackListUpdated.Invoke();
 		}
 
@@ -180,6 +225,7 @@ namespace Nox.CCK.Language {
 				return;
 			}
 			LanguagePacks.Remove(pack);
+			InvalidatePacks();
 			OnPackListUpdated.Invoke();
 		}
 
@@ -188,7 +234,7 @@ namespace Nox.CCK.Language {
 			=> GetInPacks(CurrentLanguage, key, packs);
 
 		public static string GetInPacks(string language, string key, List<LanguagePack> packs = null) {
-			packs ??= GetPacks().ToList();
+			packs ??= GetPacksList();
 			for (var i = 0; i < packs.Count; i++) {
 				var pack = packs[i];
 				if (!pack)
@@ -200,7 +246,7 @@ namespace Nox.CCK.Language {
 		}
 
 		public static bool Has(string language, string key, List<LanguagePack> packs = null) {
-			packs ??= GetPacks().ToList();
+			packs ??= GetPacksList();
 			for (var i = 0; i < packs.Count; i++) {
 				var pack = packs[i];
 				if (pack && pack.HasLocalizationString(language, key))
