@@ -30,6 +30,11 @@
     display: none;
 }
 
+/* Foldout whose content is aligned with the panel, instead of being indented under its toggle. */
+.foldout-flush > .unity-foldout__content {
+    margin-left: 0;
+}
+
 .margin {
     margin-top: 1px;
     margin-right: 3px;

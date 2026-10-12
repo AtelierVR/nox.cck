@@ -2,7 +2,7 @@
     <Style src="project://database/Packages/nox.cck/Resources/nox.style.uss?fileID=7433441132597879392&amp;guid=956d93e835714844b98277f4fdbd77d3&amp;type=3#nox.style" />
     <ui:VisualElement name="root" style="flex-grow: 1;">
         <ui:VisualElement name="header" class="header bg-secondary border m-8 p-4 rounded-md">
-            <ui:Label text=".." name="header-label" class="text-center" />
+            <uie:LocalizedLabel name="header-label" class="text-center" />
         </ui:VisualElement>
         <ui:VisualElement name="content" />
     </ui:VisualElement>
