@@ -3,7 +3,6 @@ using Object = UnityEngine.Object;
 using System.IO;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -18,13 +17,25 @@ namespace Nox.CCK.Utils {
 		public static readonly List<LogEntry> History = new();
 
 		public const int MaxLogLines = 1000;
+
+		/// <summary>
+		/// How many entries are dropped at once once the history is full. Trimming one entry per log
+		/// shifted the whole list every time (a capture showed <c>Buffer.Memmove</c> 855 times over
+		/// 200 frames originating here); dropping a block amortizes that to one shift per batch.
+		/// </summary>
+		private const int HistoryTrimBatch = MaxLogLines / 8;
 		public const long MaxLogSize = 1024 * 1024 * 10; // 10 MB
 
+		// Cached: these never change at runtime and Path.Combine + the old AppPath getter
+		// (filesystem lookup) were executed on every single log call.
+		private static string _logDir;
+		private static string _logFile;
+
 		public static string LogDir
-			=> Path.Combine(Constants.AppPath, "logs");
+			=> _logDir ??= Path.Combine(Constants.AppPath, "logs");
 
 		public static string LogFile
-			=> Path.Combine(LogDir, "latest.log");
+			=> _logFile ??= Path.Combine(LogDir, "latest.log");
 
 		public static byte LogID { get; private set; } = 0;
 		public static bool IsInitialized { get; private set; } = false;
@@ -32,6 +43,9 @@ namespace Nox.CCK.Utils {
 		private static readonly object FileLock = new();
 		// Persistent writer – kept open to avoid OS file-handle open/close overhead (~1-2ms each).
 		private static StreamWriter _logWriter;
+		// Characters written to the current log file, used to rotate on size without a
+		// File.Exists + FileInfo stat on every log line. Guarded by FileLock.
+		private static long _logBytes;
 
 
 		public ILogHandler logHandler { get; set; } = ULogger.unityLogger.logHandler;
@@ -47,6 +61,26 @@ namespace Nox.CCK.Utils {
 		private static void EditorInit() {
 			Init();
 			IsInitialized = true;
+			ApplyConsoleStackTraceSettings();
+		}
+
+		/// <summary>
+		/// Unity extracts a managed stack trace for every console line, which costs ~0.2 ms per log
+		/// (measured through <c>Debug.ExtractStackTraceNoAlloc</c>: 203 calls over 20 frames in one
+		/// capture). This follows <see cref="DebugStackTrace"/> instead of adding a second knob: that
+		/// flag already decides whether <see cref="Print"/> keeps a trace for the Log/Debug levels,
+		/// and warnings/errors keep Unity's traces either way.
+		/// </summary>
+		private static void ApplyConsoleStackTraceSettings() {
+			try {
+				var trace = DebugStackTrace ? StackTraceLogType.ScriptOnly : StackTraceLogType.None;
+
+				// UnityEngine.LogType on purpose: LogType here is Nox.CCK.Utils.LogType.
+				Application.SetStackTraceLogType(UnityEngine.LogType.Log, trace);
+				Application.SetStackTraceLogType(UnityEngine.LogType.Assert, trace);
+			} catch (Exception e) {
+				ULogger.LogWarning($"[Logger] Could not change the console stack trace setting: {e.Message}");
+			}
 		}
 
 		[MenuItem("Nox/Logger/Open Latest Log")]
@@ -165,18 +199,35 @@ namespace Nox.CCK.Utils {
 					Directory.CreateDirectory(LogDir);
 
 				if (File.Exists(LogFile)) {
-					var    creationTime = File.GetCreationTime(LogFile);
-					var    i            = 0;
-					string newFileName;
-					do {
-						newFileName = Path.Combine(LogDir, $"log_{creationTime:yyyy-MM-dd_HH-mm-ss}_{i++}.log");
-					} while (File.Exists(newFileName));
+					var existing = new FileInfo(LogFile);
 
-					try {
-						File.Move(LogFile, newFileName);
-					} catch (IOException) {
-						// The file is held open by another process (e.g. a second game instance or the editor).
-						// Skip rotation and fall through to truncate+overwrite with FileMode.Create below.
+					// An empty latest.log is what a domain reload leaves behind (the writer had just been
+					// opened): rotating it archived thousands of useless files, and the free-name search
+					// below then walked past all of them — one File.Exists per candidate, ~4k stats on
+					// every reload in this project.
+					if (existing.Length > 0) {
+						var    creationTime = existing.CreationTime;
+						var    prefix       = $"log_{creationTime:yyyy-MM-dd_HH-mm-ss}_";
+						string newFileName;
+
+						// Resume the numbering after the archives that already exist for this timestamp.
+						var next = 0;
+						foreach (var archived in Directory.GetFiles(LogDir, prefix + "*.log")) {
+							var suffix = Path.GetFileNameWithoutExtension(archived)[prefix.Length..];
+							if (int.TryParse(suffix, out var index) && index >= next)
+								next = index + 1;
+						}
+
+						do {
+							newFileName = Path.Combine(LogDir, $"{prefix}{next++}.log");
+						} while (File.Exists(newFileName));
+
+						try {
+							File.Move(LogFile, newFileName);
+						} catch (IOException) {
+							// The file is held open by another process (e.g. a second game instance or the editor).
+							// Skip rotation and fall through to truncate+overwrite with FileMode.Create below.
+						}
 					}
 				}
 
@@ -187,7 +238,9 @@ namespace Nox.CCK.Utils {
 				) { AutoFlush = true };
 
 				LogID = (byte)new System.Random().Next(byte.MinValue, byte.MaxValue);
-				_logWriter.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] Logger initialized.");
+				var header = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] Logger initialized.";
+				_logWriter.WriteLine(header);
+				_logBytes = header.Length + Environment.NewLine.Length;
 			}
 		}
 
@@ -387,6 +440,11 @@ namespace Nox.CCK.Utils {
 				var config = Config.Load();
 				config.Set("debug.stacktrace", value);
 				config.Save();
+
+				#if UNITY_EDITOR
+				// The menu toggle is the only writer: keep the console in step with the file trace.
+				ApplyConsoleStackTraceSettings();
+				#endif
 			}
 		}
 
@@ -418,12 +476,15 @@ namespace Nox.CCK.Utils {
 
 		// ReSharper disable Unity.PerformanceAnalysis
 		public static void Print(LogType type, object message, Object context = null, string tag = null) {
+			// Suppressed debug lines bail out before anything else: they used to be converted to a
+			// string and pushed to the OnLog listeners (control clients) even when debug logging is
+			// off, which also made the live stream inconsistent with History (unsuppressed only).
+			if (type == LogType.Debug && !DebugLogging)
+				return;
+
 			message ??= "<null>";
 			var logMessage = message.ToString();
 			OnLog.Invoke(type, tag, logMessage, context);
-
-			if (type == LogType.Debug && !DebugLogging)
-				return;
 
 			try {
 				// File info (line numbers) is expensive — only capture it for types that write the stack trace
@@ -461,17 +522,21 @@ namespace Nox.CCK.Utils {
 							if (!IsInitialized) {
 								Init();
 								IsInitialized = true;
-							} else if (_logWriter == null || !File.Exists(LogFile) || new FileInfo(LogFile).Length > MaxLogSize) {
+							} else if (_logWriter == null || _logBytes > MaxLogSize) {
 								Init();
 								// Note: Avoid recursive call here, just log directly
 								_logWriter.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [Log] [Logger.OnLog] Log file exceeded maximum size and was rotated.");
 							}
 
 							// Use the persistent writer — avoids per-call FileStream open/close overhead
-							_logWriter.WriteLine($"[{timestamp:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [{type}] [{(string.IsNullOrEmpty(tag) ? "" : tag + ":")}{className}.{methodName}] {logMessage}");
+							var line = $"[{timestamp:yyyy-MM-dd HH:mm:ss.fff} {LogID:X2}] [{type}] [{(string.IsNullOrEmpty(tag) ? "" : tag + ":")}{className}.{methodName}] {logMessage}";
+							_logWriter.WriteLine(line);
+							_logBytes += line.Length + Environment.NewLine.Length;
 
-							if (stackTraceStr != null)
+							if (stackTraceStr != null) {
 								_logWriter.WriteLine(stackTraceStr);
+								_logBytes += stackTraceStr.Length + Environment.NewLine.Length;
+							}
 						}
 					} catch (Exception e) {
 						// Can't use custom logging here to avoid infinite recursion
@@ -479,8 +544,8 @@ namespace Nox.CCK.Utils {
 					}
 				});
 
-				if (History.Count > MaxLogLines)
-					History.RemoveAt(0);
+				if (History.Count >= MaxLogLines)
+					History.RemoveRange(0, HistoryTrimBatch);
 
 				var entry = new LogEntry {
 					Type      = type,
@@ -542,7 +607,27 @@ namespace Nox.CCK.Utils {
 
 		private static string ParseToString(LogEntry entry) {
 			var tagPart = string.IsNullOrEmpty(entry.Tag) ? "" : $" [<color=#{ColorFromTag(entry.Tag):X6}>{entry.Tag}</color>]";
-			return $"<b>[<color=#{ColorFromType(entry.Type):X6}>{entry.Type.ToString().ToUpperInvariant()}</color>]{tagPart}</b> {entry.Message}";
+			return $"<b>[<color=#{ColorFromType(entry.Type):X6}>{TypeName(entry.Type)}</color>]{tagPart}</b> {entry.Message}";
+		}
+
+		/// <summary>
+		/// Uppercase display name of a log type. Kept as literals: the previous
+		/// <c>type.ToString().ToUpperInvariant()</c> allocated two strings per log line
+		/// and went through the culture-aware casing code path.
+		/// </summary>
+		public static string TypeName(LogType type) {
+			switch (type) {
+				case LogType.Debug:     return "DEBUG";
+				case LogType.Log:       return "LOG";
+				case LogType.Warning:   return "WARNING";
+				case LogType.Error:     return "ERROR";
+				case LogType.Assert:    return "ASSERT";
+				case LogType.Exception: return "EXCEPTION";
+				#if UNITY_EDITOR
+				case LogType.Editor: return "EDITOR";
+				#endif
+				default: return "LOG";
+			}
 		}
 
 		private static int ColorFromTag(string tag) {

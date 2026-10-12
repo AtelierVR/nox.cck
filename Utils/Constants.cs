@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using UnityEngine;
 
 namespace Nox.CCK.Utils {
 	public class Constants {
@@ -10,33 +9,37 @@ namespace Nox.CCK.Utils {
 		public static string ProtocolIdentifier
 			=> "Nox";
 
+		private static string _appPath;
+		private static string _cachePath;
+		private static string _configPath;
+
 		public static string AppPath {
 			get {
+				if (_appPath != null) return _appPath;
 				var dir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
 					+ (PlatformExtensions.CurrentPlatform == Platform.Windows ? "/.nox/" : "/nox/");
 				if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-				return dir;
+				return _appPath = dir;
 			}
 		}
 
 		public static string CachePath {
 			get {
+				if (_cachePath != null) return _cachePath;
 				var dir = Path.Combine(AppPath, "cache");
 				if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-				return dir;
+				return _cachePath = dir;
 			}
 		}
 
 		public static string ConfigPath {
 			get {
+				if (_configPath != null) return _configPath;
 				var dir = Path.Combine(AppPath, "config");
 				if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-				return dir;
+				return _configPath = dir;
 			}
 		}
-
-		public static Engine CurrentEngine
-			=> Engine.Unity;
 
 		public static float  IntervalLantencyRequest = 2.5f;
 		public static float  DefaultGravity          = -9.81f;
@@ -45,27 +48,5 @@ namespace Nox.CCK.Utils {
 		public static double DefaultCrouchMultiplier = 0.5f;
 		public static double DefaultSprintMultiplier = 2f;
 		public static float  DefaultFlySpeed         = .1f;
-
-		public static Platform CurrentPlatform {
-			get {
-				switch (Application.platform) {
-					case RuntimePlatform.WindowsEditor:
-					case RuntimePlatform.WindowsPlayer:
-						return Platform.Windows;
-					case RuntimePlatform.OSXEditor:
-					case RuntimePlatform.OSXPlayer:
-						return Platform.MacOS;
-					case RuntimePlatform.LinuxEditor:
-					case RuntimePlatform.LinuxPlayer:
-						return Platform.Linux;
-					case RuntimePlatform.Android:
-						return Platform.Android;
-					case RuntimePlatform.IPhonePlayer:
-						return Platform.IOS;
-					default:
-						return Platform.None;
-				}
-			}
-		}
 	}
 }

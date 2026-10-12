@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -22,20 +23,20 @@ namespace Nox.CCK.Utils {
 			using var sha = SHA256.Create();
 			var bytes = Encoding.UTF8.GetBytes(input);
 			var hash = sha.ComputeHash(bytes);
-			return BitConverter.ToString(hash).Replace("-", "").ToLower();
+			return ToHex(hash);
 		}
 
 		public static string HashFile(string path) {
 			using var sha = SHA256.Create();
 			using var stream = File.OpenRead(path);
 			var hash = sha.ComputeHash(stream);
-			return BitConverter.ToString(hash).Replace("-", "").ToLower();
+			return ToHex(hash);
 		}
 
 		public static string HashBytes(byte[] data) {
 			using var sha = SHA256.Create();
 			var hash = sha.ComputeHash(data);
-			return BitConverter.ToString(hash).Replace("-", "").ToLower();
+			return ToHex(hash);
 		}
 
 		/// <summary>Hashes a string and returns <c>&lt;type&gt;:&lt;hex&gt;</c>.</summary>
@@ -113,15 +114,58 @@ namespace Nox.CCK.Utils {
 			return ToHex(algorithm.ComputeHash(data));
 		}
 
+		/// <summary>
+		/// Memoized normalized names. Callers normalize inside per-element predicates
+		/// (<c>Hashs.FirstOrDefault(hash =&gt; NormalizeType(hash.Type) == NormalizeType(type))</c>)
+		/// while the set of distinct algorithm names is tiny, so every call used to pay a
+		/// StringBuilder + one culture-aware <c>char.ToLowerInvariant</c> per character.
+		/// </summary>
+		private static readonly ConcurrentDictionary<string, string> NormalizedTypes = new();
+
 		/// <summary>Normalizes an algorithm name (<c>SHA-256</c> → <c>sha256</c>); defaults when empty.</summary>
 		public static string NormalizeType(string type) {
 			if (string.IsNullOrWhiteSpace(type))
 				return DefaultType;
 
+			if (NormalizedTypes.TryGetValue(type, out var cached))
+				return cached;
+
+			var normalized = NormalizeTypeSlow(type);
+
+			// Only memoize short names: this keeps an unexpected caller from growing the
+			// cache without bound while still covering every real algorithm name.
+			if (type.Length <= 32 && NormalizedTypes.Count < 256)
+				NormalizedTypes[type] = normalized;
+
+			return normalized;
+		}
+
+		private static string NormalizeTypeSlow(string type) {
+			// Fast path: a name that is already lowercase ASCII (the common case) is returned
+			// as-is, without allocating a StringBuilder or touching the globalization code.
+			var plain = true;
+			for (var i = 0; i < type.Length; i++) {
+				var c = type[i];
+				if (c >= 'a' && c <= 'z' || c >= '0' && c <= '9')
+					continue;
+
+				plain = false;
+				break;
+			}
+
+			if (plain)
+				return type;
+
 			var builder = new StringBuilder(type.Length);
-			foreach (var character in type)
-				if (char.IsLetterOrDigit(character))
+			foreach (var character in type) {
+				if (character >= 'a' && character <= 'z' || character >= '0' && character <= '9') {
+					builder.Append(character);
+				} else if (character >= 'A' && character <= 'Z') {
+					builder.Append((char)(character + 32));
+				} else if (char.IsLetterOrDigit(character)) {
 					builder.Append(char.ToLowerInvariant(character));
+				}
+			}
 
 			return builder.Length == 0 ? DefaultType : builder.ToString();
 		}
@@ -130,8 +174,26 @@ namespace Nox.CCK.Utils {
 		public static string Format(string type, string digest)
 			=> string.IsNullOrEmpty(digest) ? null : $"{NormalizeType(type)}:{digest}";
 
-		public static string ToHex(byte[] hash)
-			=> hash == null ? null : BitConverter.ToString(hash).Replace("-", "").ToLower();
+		/// <summary>
+		/// Lowercase hexadecimal digest, built digit by digit on purpose.
+		/// <c>BitConverter.ToString(hash).Replace("-", "").ToLower()</c> allocated three strings per
+		/// call and routed the casing through the culture-aware TextInfo machinery: one profiler
+		/// capture showed ~750k <c>ToLower</c> calls coming from this method alone.
+		/// </summary>
+		public static string ToHex(byte[] hash) {
+			if (hash == null)
+				return null;
+
+			const string digits = "0123456789abcdef";
+			var chars = new char[hash.Length * 2];
+			for (var i = 0; i < hash.Length; i++) {
+				var b = hash[i];
+				chars[i * 2]     = digits[b >> 4];
+				chars[i * 2 + 1] = digits[b & 0x0F];
+			}
+
+			return new string(chars);
+		}
 
 		private static HashAlgorithm Create(string type)
 			=> NormalizeType(type) switch {
