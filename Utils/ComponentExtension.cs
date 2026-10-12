@@ -29,6 +29,14 @@ namespace Nox.CCK.Utils {
 		public static bool IsActive(this Component component)
 			=> component && component.gameObject.IsActive();
 
+		/// <summary>
+		/// Whether the object is gone and must not be used: <c>true</c> when the reference is <c>null</c> or
+		/// when the object was destroyed. Unity's <c>== null</c> already answers <c>true</c> for a destroyed
+		/// object, so the two cases are deliberately not told apart.
+		/// </summary>
+		public static bool IsDestroyed(this Object @object)
+			=> !@object;
+
 
 		public static T GetComponentInParents<T>(this GameObject gameObject, bool includeInactive = false) {
 			var parent = gameObject.transform;
