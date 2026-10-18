@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Nox.CCK.Utils;
 using UnityEngine;
@@ -55,8 +55,9 @@ namespace Nox.CCK.Mods.Assets
         /// </summary>
         /// <typeparam name="T">The type of asset.</typeparam>
         /// <param name="path">The resource identifier.</param>
+        /// <param name="cancellationToken">Cancels the lookup (a caller that no longer needs the asset).</param>
         /// <returns>A task with a boolean indicating if the asset exists.</returns>
-        public UniTask<bool> HasAssetAsync<T>(ResourceIdentifier path)
+        public UniTask<bool> HasAssetAsync<T>(ResourceIdentifier path, CancellationToken cancellationToken = default)
             where T : Object;
 
         /// <summary>
@@ -65,8 +66,9 @@ namespace Nox.CCK.Mods.Assets
         /// </summary>
         /// <typeparam name="T">The type of asset.</typeparam>
         /// <param name="path">The resource identifier.</param>
+        /// <param name="cancellationToken">Cancels the lookup (a caller that no longer needs the asset).</param>
         /// <returns>A task with the asset, or null if not found.</returns>
-        public UniTask<T> GetAssetAsync<T>(ResourceIdentifier path)
+        public UniTask<T> GetAssetAsync<T>(ResourceIdentifier path, CancellationToken cancellationToken = default)
             where T : Object;
 
         /// <summary>
@@ -75,8 +77,9 @@ namespace Nox.CCK.Mods.Assets
         /// </summary>
         /// <typeparam name="T">The type of asset.</typeparam>
         /// <param name="path">The resource identifier.</param>
+        /// <param name="cancellationToken">Cancels the lookup (a caller that no longer needs the asset).</param>
         /// <returns>A task with a boolean indicating if the override asset exists.</returns>
-        public UniTask<bool> HasInternalAssetAsync<T>(ResourceIdentifier path) where T : Object;
+        public UniTask<bool> HasInternalAssetAsync<T>(ResourceIdentifier path, CancellationToken cancellationToken = default) where T : Object;
         
         /// <summary>
         /// Asynchronously gets an override asset from the specified namespace.
@@ -84,8 +87,9 @@ namespace Nox.CCK.Mods.Assets
         /// </summary>
         /// <typeparam name="T">The type of asset.</typeparam>
         /// <param name="path">The resource identifier.</param>
+        /// <param name="cancellationToken">Cancels the lookup (a caller that no longer needs the asset).</param>
         /// <returns>A task with the override asset, or null if not found.</returns>
-        public UniTask<T> GetInternalAssetAsync<T>(ResourceIdentifier path) where T : Object;
+        public UniTask<T> GetInternalAssetAsync<T>(ResourceIdentifier path, CancellationToken cancellationToken = default) where T : Object;
         
         /// <summary>
         /// Checks if a world (scene) exists in the specified namespace.
