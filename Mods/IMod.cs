@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Cysharp.Threading.Tasks;
-using Nox.CCK.Mods.Assets;
-using Nox.CCK.Mods.Initializers;
 using Nox.CCK.Mods.Metadata;
 
 namespace Nox.CCK.Mods {
@@ -14,14 +11,13 @@ namespace Nox.CCK.Mods {
 		/// <summary>
 		/// Gets the type of the mod.
 		/// </summary>
-		/// <returns></returns>
-		public string GetModType();
-		
+		public string ModType { get; }
+
 		/// <summary>
 		/// Gets the metadata of the mod.
 		/// </summary>
 		/// <returns>The mod metadata.</returns>
-		public IModMetadata GetMetadata();
+		public IModMetadata Metadata { get; }
 
 		/// <summary>
 		/// Gets a data value associated with the specified key.
@@ -53,13 +49,12 @@ namespace Nox.CCK.Mods {
 		/// Gets all data values stored in the mod.
 		/// </summary>
 		/// <returns>A dictionary containing all data key-value pairs.</returns>
-		public Dictionary<string, object> GetDatas();
+		public Dictionary<string, object> Datas { get; }
 
 		/// <summary>
-		/// Checks if the mod is currently loaded.
+		/// Whether the mod is currently loaded.
 		/// </summary>
-		/// <returns>True if the mod is loaded; otherwise, false.</returns>
-		public bool IsLoaded();
+		public bool IsLoaded { get; }
 
 		/// <summary>
 		/// Loads the mod asynchronously.
@@ -77,13 +72,13 @@ namespace Nox.CCK.Mods {
 		/// Gets the profiling data for the mod.
 		/// </summary>
 		/// <returns>An array of profiling profiles.</returns>
-		public IEnumerable<Profile> GetProfiler();
+		public IEnumerable<Profile> Profiler { get; }
 
 		/// <summary>
 		/// Gets the AppDomain in which the mod is running.
 		/// </summary>
 		/// <returns>The mod's AppDomain.</returns>
-		public AppDomain GetAppDomain();
+		public AppDomain AppDomain { get; }
 
 		/// <summary>
 		/// Gets an instance of the specified type from the mod.
