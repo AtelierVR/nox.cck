@@ -19,25 +19,25 @@ namespace Nox.CCK.Utils
             Display = display ?? name;
         }
 
-        public static Platform None     
+        public static Platform None
             => new("none",     "None");
 
-        public static Platform Windows  
+        public static Platform Windows
             => new("windows",  "Windows");
 
-        public static Platform Linux    
+        public static Platform Linux
             => new("linux",    "Linux");
 
-        public static Platform MacOS    
+        public static Platform MacOS
             => new("macos",    "macOS");
 
-        public static Platform Android  
+        public static Platform Android
             => new("android",  "Android");
 
-        public static Platform IOS      
+        public static Platform IOS
             => new("ios",      "iOS");
 
-        public static Platform VisionOS 
+        public static Platform VisionOS
             => new("visionos", "visionOS");
 
         public static Platform From(string name, string display = null)
@@ -81,9 +81,9 @@ namespace Nox.CCK.Utils
 
         /// <summary>
         /// Convertit en <see cref="Platform"/> une chaîne : un nom, un alias (<c>windows</c>,
-        /// <c>win64</c>, <c>osx</c>, <c>mac</c>, <c>xros</c>…), un libellé affiché
+        /// <c>win64</c>, <c>osx</c>, <c>mac</c>, <c>xros</c>...), un libellé affiché
         /// (<see cref="Platform.Display"/>) ou, pour les scènes/prefabs antérieurs au passage de
-        /// l'<c>enum Platform</c>, son ancien identifiant (<c>"0"</c> = None … <c>"6"</c> = VisionOS,
+        /// l'<c>enum Platform</c>, son ancien identifiant (<c>"0"</c> = None ... <c>"6"</c> = VisionOS,
         /// dans l'ordre de <see cref="All"/>). Toute valeur inconnue donne <see cref="Platform.None"/> :
         /// les plateformes forment un ensemble fermé, contrairement aux moteurs (<see cref="Engine.From"/>).
         /// </summary>

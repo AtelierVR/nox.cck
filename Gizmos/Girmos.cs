@@ -1,4 +1,6 @@
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using UGizmos = UnityEngine.Gizmos;
 
@@ -17,24 +19,25 @@ namespace Nox.CCK.Development {
 			Vector3    forward     = orientation * Vector3.forward;
 			Vector3    right       = orientation * Vector3.right;
 			// Bottom hemisphere (radius1)
-			Handles.DrawWireArc(point1, forward, right, -180, radius1);
-			Handles.DrawWireArc(point1, right, forward, 180, radius1);
+			DrawWireArc(point1, forward, right, -180, radius1);
+			DrawWireArc(point1, right, forward, 180, radius1);
 			// Top hemisphere (radius2)
-			Handles.DrawWireArc(point2, forward, right, 180, radius2);
-			Handles.DrawWireArc(point2, right, forward, -180, radius2);
+			DrawWireArc(point2, forward, right, 180, radius2);
+			DrawWireArc(point2, right, forward, -180, radius2);
 			// Connecting lines
-			Handles.DrawLine(point1 + right * radius1, point2 + right * radius2);
-			Handles.DrawLine(point1 - right * radius1, point2 - right * radius2);
-			Handles.DrawLine(point1 + forward * radius1, point2 + forward * radius2);
-			Handles.DrawLine(point1 - forward * radius1, point2 - forward * radius2);
+			DrawLine(point1 + right * radius1, point2 + right * radius2);
+			DrawLine(point1 - right * radius1, point2 - right * radius2);
+			DrawLine(point1 + forward * radius1, point2 + forward * radius2);
+			DrawLine(point1 - forward * radius1, point2 - forward * radius2);
 			#endif
 		}
 
 		// ── Color ────────────────────────────────────────────────────────
 		public static Color Color {
 			#if UNITY_EDITOR
-			get => UGizmos.color;
+			get => Handles.color;
 			set {
+				// Kept in sync for the code that still reads UnityEngine.Gizmos.color in a gizmo pass.
 				UGizmos.color = value;
 				Handles.color = value;
 			}
@@ -45,12 +48,13 @@ namespace Nox.CCK.Development {
 		}
 
 		// ── Lines ────────────────────────────────────────────────────────
-		public static void DrawLine(Vector3 from, Vector3 to)
+		// Drawn through Handles rather than UnityEngine.Gizmos: Gizmos only draws from a gizmo pass, while
+		// Handles draws from a gizmo pass *and* from a SceneView callback (see GizmosRenderer).
+		public static void DrawLine(Vector3 from, Vector3 to) {
 			#if UNITY_EDITOR
-			=> UGizmos.DrawLine(from, to);
-		#else
-            {}
-		#endif
+			Handles.DrawLine(from, to);
+			#endif
+		}
 
 		public static void DrawDottedLine(Vector3 from, Vector3 to, float screenSpaceSize = 4f) {
 			#if UNITY_EDITOR
@@ -70,43 +74,42 @@ namespace Nox.CCK.Development {
 			#endif
 		}
 
-		// ── Rays ─────────────────────────────────────────────────────────
-		public static void DrawRay(Vector3 from, Vector3 direction)
+		// ── Rays ───────────────────────────────────────────────────────
+		public static void DrawRay(Vector3 from, Vector3 direction) {
 			#if UNITY_EDITOR
-			=> UGizmos.DrawRay(from, direction);
-		#else
-            {}
-		#endif
+			Handles.DrawLine(from, from + direction);
+			#endif
+		}
 
 		// ── Spheres ──────────────────────────────────────────────────────
-		public static void DrawSphere(Vector3 center, float radius)
+		public static void DrawSphere(Vector3 center, float radius) {
 			#if UNITY_EDITOR
-			=> UGizmos.DrawSphere(center, radius);
-		#else
-            {}
-		#endif
+			// Handles has no solid sphere: the cap is what the scene view uses for its own handles.
+			Handles.SphereHandleCap(0, center, Quaternion.identity, radius * 2f, EventType.Repaint);
+			#endif
+		}
 
-		public static void DrawWireSphere(Vector3 center, float radius)
+		public static void DrawWireSphere(Vector3 center, float radius) {
 			#if UNITY_EDITOR
-			=> UGizmos.DrawWireSphere(center, radius);
-		#else
-            {}
-		#endif
+			// Handles has no wire sphere: three great circles.
+			Handles.DrawWireDisc(center, Vector3.up, radius);
+			Handles.DrawWireDisc(center, Vector3.right, radius);
+			Handles.DrawWireDisc(center, Vector3.forward, radius);
+			#endif
+		}
 
-		// ── Cubes ────────────────────────────────────────────────────────
-		public static void DrawCube(Vector3 center, Vector3 size)
+		// ── Cubes ──────────────────────────────────────────────────────
+		public static void DrawCube(Vector3 center, Vector3 size) {
 			#if UNITY_EDITOR
-			=> UGizmos.DrawCube(center, size);
-		#else
-            {}
-		#endif
+			Handles.CubeHandleCap(0, center, Quaternion.identity, Mathf.Max(size.x, size.y, size.z), EventType.Repaint);
+			#endif
+		}
 
-		public static void DrawWireCube(Vector3 center, Vector3 size)
+		public static void DrawWireCube(Vector3 center, Vector3 size) {
 			#if UNITY_EDITOR
-			=> UGizmos.DrawWireCube(center, size);
-		#else
-            {}
-		#endif
+			Handles.DrawWireCube(center, size);
+			#endif
+		}
 
 		// ── Discs & Arcs ─────────────────────────────────────────────────
 		public static void DrawWireDisc(Vector3 center, Vector3 normal, float radius) {
@@ -174,6 +177,36 @@ namespace Nox.CCK.Development {
 			#endif
 		}
 
+		/// <summary>
+		/// Arrow drawn as geometry — a shaft and a cone head — whose tip is at the end of the arrow, in the
+		/// current gizmo colour. Unlike <see cref="DrawArrow(Vector3, Vector3, float)"/>, which draws a handle
+		/// cap, it takes its lengths in metres and points reliably towards
+		/// <paramref name="direction"/>.
+		/// </summary>
+		/// <param name="from">Tail of the arrow.</param>
+		/// <param name="direction">Direction the arrow points to.</param>
+		/// <param name="length">Total length of the arrow, head included.</param>
+		/// <param name="headLength">Length of the cone head, clamped to <paramref name="length"/>.</param>
+		/// <param name="headAngle">Full opening angle of the cone head, in degrees.</param>
+		public static void DrawArrow(Vector3 from, Vector3 direction, float length, float headLength, float headAngle = 60f) {
+			#if UNITY_EDITOR
+			if (direction.sqrMagnitude < 1e-8f || length <= 0f)
+				return;
+
+			var dir  = direction.normalized;
+			var tip  = from + dir * length;
+			var head = Mathf.Clamp(headLength, 0f, length);
+
+			// The shaft stops where the head starts, so the two do not overlap.
+			if (length > head)
+				DrawRay(from, dir * (length - head));
+
+			// DrawSolidCone takes the apex, i.e. the tip: the head is built from the tip backwards.
+			if (head > 0f)
+				DrawSolidCone(tip, -dir, headAngle, head);
+			#endif
+		}
+
 		// ── Cone ─────────────────────────────────────────────────────────
 		public static void DrawSolidCone(Vector3 apex, Vector3 direction, float angle, float length, int segments = 16) {
 			#if UNITY_EDITOR
@@ -200,7 +233,7 @@ namespace Nox.CCK.Development {
 		public static void DrawRange(Vector3 center, float radius) {
 			#if UNITY_EDITOR
 			if (radius > 0f)
-				UGizmos.DrawWireSphere(center, radius);
+				DrawWireSphere(center, radius);
 			#endif
 		}
 
@@ -220,9 +253,9 @@ namespace Nox.CCK.Development {
 			var   capCentre = position + dir * (Mathf.Cos(half * Mathf.Deg2Rad) * radius);
 			var   capRadius = Mathf.Sin(half * Mathf.Deg2Rad) * radius;
 
-			Handles.DrawWireDisc(capCentre, dir, capRadius);
-			Handles.DrawLine(position, position + (Quaternion.AngleAxis( half, right) * dir) * radius);
-			Handles.DrawLine(position, position + (Quaternion.AngleAxis(-half, right) * dir) * radius);
+			DrawWireDisc(capCentre, dir, capRadius);
+			DrawLine(position, position + Quaternion.AngleAxis( half, right) * dir * radius);
+			DrawLine(position, position + Quaternion.AngleAxis(-half, right) * dir * radius);
 			#endif
 		}
 
@@ -235,7 +268,7 @@ namespace Nox.CCK.Development {
 			if (radius <= 0f)
 				return;
 			var n = normal.sqrMagnitude < 1e-8f ? Vector3.up : normal.normalized;
-			Handles.DrawWireDisc(position, n, radius);
+			DrawWireDisc(position, n, radius);
 			DrawSolidCone(position, n, 90f, radius);
 			#endif
 		}

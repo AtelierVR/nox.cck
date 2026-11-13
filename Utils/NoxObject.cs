@@ -49,9 +49,6 @@ namespace Nox.CCK.Utils {
 				Logger.LogError($"Error checking awaiter: {e?.Message}");
 				Logger.LogError(e);
 				return false;
-			} catch {
-				Logger.LogError("Unknown error checking awaiter.");
-				return false;
 			}
 		}
 

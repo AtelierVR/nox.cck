@@ -8,8 +8,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using ILogger = UnityEngine.ILogger;
 
+
 #if UNITY_EDITOR
 using UnityEditor;
+using Progress = UnityEditor.Progress;
 #endif // UNITY_EDITOR
 
 namespace Nox.CCK.Utils {
@@ -56,7 +58,7 @@ namespace Nox.CCK.Utils {
 			// Constructor privé pour le singleton
 		}
 
-		#if UNITY_EDITOR
+#if UNITY_EDITOR
 		[InitializeOnLoadMethod]
 		private static void EditorInit() {
 			Init();
@@ -148,13 +150,11 @@ namespace Nox.CCK.Utils {
 		/// <param name="background">If true, uses Unity's Background Tasks Progress API instead of a modal dialog.</param>
 		public static void ShowProgress(string title, string message, float progress, bool background = false) {
 			if (background) {
-				if (_progressId == -1)
-					_progressId = UnityEditor.Progress.Start(title, message, UnityEditor.Progress.Options.Managed);
+				var id = ProgressId;
+				if (id == -1 || !Progress.Exists(id))
+					ProgressId = id = Progress.Start(title, message, Progress.Options.Managed);
 
-				if (progress < 0f)
-					UnityEditor.Progress.Report(_progressId, -1f, message);
-				else
-					UnityEditor.Progress.Report(_progressId, progress, message);
+				Progress.Report(id, progress < 0f ? -1f : progress, message);
 			} else {
 				EditorUtility.DisplayProgressBar(title, message, progress);
 			}
@@ -166,32 +166,68 @@ namespace Nox.CCK.Utils {
 		/// Clears the progress bar in the Editor.
 		/// </summary>
 		public static void ClearProgress() {
-			if (_progressId != -1) {
-				UnityEditor.Progress.Remove(_progressId);
-				_progressId = -1;
+			var id = ProgressId;
+			if (id != -1) {
+				if (Progress.Exists(id))
+					Progress.Remove(id);
+				ProgressId = -1;
 			}
 
 			EditorUtility.ClearProgressBar();
 			OnProgress.Invoke(false, null, null, -1f);
 		}
 
-		private static int _progressId = -1;
+		/// <summary>
+		/// Key of the Background Tasks entry id in <see cref="SessionState"/>.
+		/// </summary>
+		private const string ProgressIdKey = "nox.logger.progress_id";
 
-		#else
+		/// <summary>
+		/// Id of the Background Tasks entry.
+		/// <para>
+		/// The entry belongs to the Editor and outlives the scripting domain, while a static field does
+		/// not: after a reload the id was lost and the entry could never be removed, so every reload left
+		/// one more "loading" task running in the Background Tasks window. <see cref="SessionState"/>
+		/// survives the reload, so the next domain knows which entry to clean up.
+		/// </para>
+		/// </summary>
+		private static int ProgressId {
+			get => SessionState.GetInt(ProgressIdKey, -1);
+			set => SessionState.SetInt(ProgressIdKey, value);
+		}
+
+		/// <summary>
+		/// Removes the Background Tasks entry a previous domain did not finish (it was interrupted by a
+		/// reload while loading/showing progress), then forgets it.
+		/// </summary>
+		[InitializeOnLoadMethod]
+		private static void CleanupStaleProgress() {
+			var id = ProgressId;
+			if (id == -1)
+				return;
+
+			if (Progress.Exists(id)) {
+				Progress.Remove(id);
+				ULogger.Log($"[{nameof(Logger)}] Removed the background task left by the previous domain (#{id}).");
+			}
+
+			ProgressId = -1;
+		}
+
+#else
 		public static void ShowProgress(string title, string message, float progress, bool background = false)
 			=> OnProgress.Invoke(true, title, message, progress);
-		
+
 		public static void ClearProgress()
 			=> OnProgress.Invoke(false, null, null, -1f);
 
-		#endif
+#endif
 
 		public static readonly UnityEvent<bool, string, string, float> OnProgress = new();
 		public static readonly UnityEvent<LogType, string, string, Object> OnLog = new();
 
 		public static void Init() {
 			lock (FileLock) {
-				// Close any existing writer before rotating the file
 				_logWriter?.Close();
 				_logWriter = null;
 
@@ -200,17 +236,10 @@ namespace Nox.CCK.Utils {
 
 				if (File.Exists(LogFile)) {
 					var existing = new FileInfo(LogFile);
-
-					// An empty latest.log is what a domain reload leaves behind (the writer had just been
-					// opened): rotating it archived thousands of useless files, and the free-name search
-					// below then walked past all of them — one File.Exists per candidate, ~4k stats on
-					// every reload in this project.
 					if (existing.Length > 0) {
-						var    creationTime = existing.CreationTime;
-						var    prefix       = $"log_{creationTime:yyyy-MM-dd_HH-mm-ss}_";
+						var creationTime = existing.CreationTime;
+						var prefix = $"log_{creationTime:yyyy-MM-dd_HH-mm-ss}_";
 						string newFileName;
-
-						// Resume the numbering after the archives that already exist for this timestamp.
 						var next = 0;
 						foreach (var archived in Directory.GetFiles(LogDir, prefix + "*.log")) {
 							var suffix = Path.GetFileNameWithoutExtension(archived)[prefix.Length..];
@@ -231,8 +260,6 @@ namespace Nox.CCK.Utils {
 					}
 				}
 
-				// Open a persistent writer (FileMode.Create after the Move above).
-				// FileShare.Delete allows another process to rotate (File.Move) this file while we hold it open.
 				_logWriter = new StreamWriter(
 					new FileStream(LogFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete)
 				) { AutoFlush = true };
@@ -383,12 +410,12 @@ namespace Nox.CCK.Utils {
 
 		private static LogType ConvertLogType(UnityEngine.LogType type)
 			=> type switch {
-				UnityEngine.LogType.Log       => LogType.Log,
-				UnityEngine.LogType.Warning   => LogType.Warning,
-				UnityEngine.LogType.Assert    => LogType.Assert,
+				UnityEngine.LogType.Log => LogType.Log,
+				UnityEngine.LogType.Warning => LogType.Warning,
+				UnityEngine.LogType.Assert => LogType.Assert,
 				UnityEngine.LogType.Exception => LogType.Exception,
-				UnityEngine.LogType.Error     => LogType.Error,
-				_                             => LogType.Debug
+				UnityEngine.LogType.Error => LogType.Error,
+				_ => LogType.Debug
 			};
 
 
@@ -441,14 +468,14 @@ namespace Nox.CCK.Utils {
 				config.Set("debug.stacktrace", value);
 				config.Save();
 
-				#if UNITY_EDITOR
+#if UNITY_EDITOR
 				// The menu toggle is the only writer: keep the console in step with the file trace.
 				ApplyConsoleStackTraceSettings();
-				#endif
+#endif
 			}
 		}
 
-		#if UNITY_EDITOR
+#if UNITY_EDITOR
 		[MenuItem("Nox/Logger/Toggle Debug Logging")]
 		private static void ToggleDebugLogging() {
 			DebugLogging = !DebugLogging;
@@ -472,7 +499,7 @@ namespace Nox.CCK.Utils {
 			UnityEditor.Menu.SetChecked("Nox/Logger/Toggle Stack Trace", DebugStackTrace);
 			return true;
 		}
-		#endif
+#endif
 
 		// ReSharper disable Unity.PerformanceAnalysis
 		public static void Print(LogType type, object message, Object context = null, string tag = null) {
@@ -495,8 +522,8 @@ namespace Nox.CCK.Utils {
 				string stackTraceStr = null;
 				if (needsStackTrace) {
 					var stackTrace = new System.Diagnostics.StackTrace(2, needsStackTrace);
-					frames         = stackTrace.GetFrames();
-					stackTraceStr  = stackTrace.ToString();
+					frames = stackTrace.GetFrames();
+					stackTraceStr = stackTrace.ToString();
 				}
 				var timestamp = DateTime.Now;
 
@@ -504,17 +531,17 @@ namespace Nox.CCK.Utils {
 				UniTask.Post(() => {
 					try {
 						var methodName = "<UnknownMethod>";
-						var className  = "<UnknownClass>";
+						var className = "<UnknownClass>";
 
 						if (frames is { Length: > 0 }) {
-							var old    = 0;
+							var old = 0;
 							var method = frames[old].GetMethod();
 							methodName = method?.Name ?? methodName;
-							className  = method?.DeclaringType?.Name ?? className;
+							className = method?.DeclaringType?.Name ?? className;
 							while (ShouldSkipFrame(className, methodName) && frames.Length > ++old) {
-								method     = frames[old].GetMethod();
+								method = frames[old].GetMethod();
 								methodName = method?.Name ?? methodName;
-								className  = method?.DeclaringType?.Name ?? className;
+								className = method?.DeclaringType?.Name ?? className;
 							}
 						}
 
@@ -548,10 +575,10 @@ namespace Nox.CCK.Utils {
 					History.RemoveRange(0, HistoryTrimBatch);
 
 				var entry = new LogEntry {
-					Type      = type,
-					Tag       = tag,
-					Message   = logMessage,
-					Context   = context,
+					Type = type,
+					Tag = tag,
+					Message = logMessage,
+					Context = context,
 					Timestamp = timestamp
 				};
 				History.Add(entry);
@@ -571,11 +598,11 @@ namespace Nox.CCK.Utils {
 					case LogType.Debug:
 						ULogger.Log(parsed, context);
 						break;
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					case LogType.Editor:
 						ULogger.Log(parsed, context);
 						break;
-					#endif
+#endif
 					case LogType.Assert:
 						ULogger.LogAssertion(parsed, context);
 						break;
@@ -617,15 +644,15 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		public static string TypeName(LogType type) {
 			switch (type) {
-				case LogType.Debug:     return "DEBUG";
-				case LogType.Log:       return "LOG";
-				case LogType.Warning:   return "WARNING";
-				case LogType.Error:     return "ERROR";
-				case LogType.Assert:    return "ASSERT";
+				case LogType.Debug: return "DEBUG";
+				case LogType.Log: return "LOG";
+				case LogType.Warning: return "WARNING";
+				case LogType.Error: return "ERROR";
+				case LogType.Assert: return "ASSERT";
 				case LogType.Exception: return "EXCEPTION";
-				#if UNITY_EDITOR
+#if UNITY_EDITOR
 				case LogType.Editor: return "EDITOR";
-				#endif
+#endif
 				default: return "LOG";
 			}
 		}
@@ -635,23 +662,23 @@ namespace Nox.CCK.Utils {
 				return 0xFFFFFF;
 
 			var hash = Hash.CRC32(tag);
-			var r    = (hash & 0xFF0000) >> 16;
-			var g    = (hash & 0x00FF00) >> 8;
-			var b    = (hash & 0x0000FF);
+			var r = (hash & 0xFF0000) >> 16;
+			var g = (hash & 0x00FF00) >> 8;
+			var b = (hash & 0x0000FF);
 			return (r << 16) | (g << 8) | b;
 		}
 
 		private static int ColorFromType(LogType type) {
 			return type switch {
-				LogType.Error     => 0xFF0000,
-				LogType.Warning   => 0xFFFF00,
-				LogType.Log       => 0xFFFFFF,
-				LogType.Debug     => 0x00FFFF,
-				LogType.Assert    => 0xFF00FF,
+				LogType.Error => 0xFF0000,
+				LogType.Warning => 0xFFFF00,
+				LogType.Log => 0xFFFFFF,
+				LogType.Debug => 0x00FFFF,
+				LogType.Assert => 0xFF00FF,
 				LogType.Exception => 0xFF8000,
-				#if UNITY_EDITOR
+#if UNITY_EDITOR
 				LogType.Editor => 0x00FF00,
-				#endif
+#endif
 				_ => 0xFFFFFF
 			};
 		}
@@ -664,9 +691,9 @@ namespace Nox.CCK.Utils {
 		Error,
 		Assert,
 		Exception,
-		#if UNITY_EDITOR
+#if UNITY_EDITOR
 		Editor,
-		#endif
+#endif
 	}
 
 	public class LogEntry {

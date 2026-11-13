@@ -13,7 +13,7 @@ namespace Nox.CCK.Utils
         {
             if (origin == null)
             {
-                foreach (var reference in FindObjectsByType<Reference>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                foreach (var reference in FindObjectsByType<Reference>(FindObjectsInactive.Include))
                     if (reference.Key == key) return reference.GetReference();
             }
             else if (origin != null)
@@ -34,7 +34,7 @@ namespace Nox.CCK.Utils
             var references = new HashSet<GameObject>();
             if (origin == null)
             {
-                foreach (var reference in FindObjectsByType<Reference>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                foreach (var reference in FindObjectsByType<Reference>(FindObjectsInactive.Include))
                     if (reference.Key == key) references.Add(reference.GetReference());
             }
             else if (origin != null)

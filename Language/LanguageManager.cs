@@ -29,6 +29,7 @@ namespace Nox.CCK.Language {
 				if (value == _currentLanguage)
 					return;
 				_currentLanguage = value;
+				Chains.Clear();
 				UpdateTexts();
 				OnLanguageChanged.Invoke(_currentLanguage);
 			}
@@ -97,12 +98,22 @@ namespace Nox.CCK.Language {
 			=> GetPacksList().ToArray();
 
 		public static string[] GetAvailableLanguages() {
+			// Every pack the texts are resolved in, so the editor (where mods may not have registered
+			// anything) lists the languages of the project packs too.
 			var languages = new List<string>();
-			foreach (var language in from pack in LanguagePacks
-				from language in pack.languages
-				where !languages.Contains(language.IETF)
-				select language)
-				languages.Add(language.IETF);
+
+			foreach (var pack in GetPacksList()) {
+				if (!pack || pack.languages == null)
+					continue;
+
+				foreach (var language in pack.languages) {
+					if (language == null || string.IsNullOrEmpty(language.IETF) || languages.Contains(language.IETF))
+						continue;
+
+					languages.Add(language.IETF);
+				}
+			}
+
 			return languages.ToArray();
 		}
 
@@ -115,38 +126,43 @@ namespace Nox.CCK.Language {
 
 		/// <summary>
 		/// Builds the IETF resolution chain: e.g. "fr-FR" → ["fr-FR", "fr", "en-US", "en"].
+		/// <para>
+		/// Cached: every text lookup of every panel builds it, and the previous version allocated a
+		/// <c>HashSet</c>, five <c>List</c> and their arrays on each call. The key is the pair
+		/// (language, current language), the only two inputs that can vary.
+		/// </para>
 		/// </summary>
 		public static string[] BuildChain(string lang) {
-			var chain = new HashSet<string>();
+			var key = (lang ?? string.Empty, CurrentLanguage);
+			if (Chains.TryGetValue(key, out var cached))
+				return cached;
 
-			var t = Chain(lang);
-			foreach (var l in t)
-				chain.Add(l);
-			
-			t = Chain(CurrentLanguage);
-			foreach (var l in t)
-				chain.Add(l);
-			
-			t = Chain(DefaultLanguage);
-			foreach (var l in t)
-				chain.Add(l);
-			
-			t = Chain(FallbackLanguage);
-			foreach (var l in t)
-				chain.Add(l);
-				
-			return chain.ToArray();
+			var chain = new List<string>(8);
+			AddChain(chain, lang);
+			AddChain(chain, CurrentLanguage);
+			AddChain(chain, DefaultLanguage);
+			AddChain(chain, FallbackLanguage);
 
-            static string[] Chain(string l) {
-				var c = new List<string> { l };
-				var d = l.IndexOf('-');
-				if (d <= 0)
-					return c.ToArray();
-				var b = l[..d];
-				if (!c.Contains(b))
-					c.Add(b);
-				return c.ToArray();
-			}
+			return Chains[key] = chain.ToArray();
+		}
+
+		/// <summary>Chains already built, keyed by (language, current language).</summary>
+		private static readonly Dictionary<(string, string), string[]> Chains = new();
+
+		/// <summary>Appends a language then its root ("fr-CA" → "fr"), keeping the first occurrence only.</summary>
+		private static void AddChain(List<string> chain, string lang) {
+			if (string.IsNullOrEmpty(lang) || chain.Contains(lang))
+				return;
+
+			chain.Add(lang);
+
+			var dash = lang.IndexOf('-');
+			if (dash <= 0)
+				return;
+
+			var root = lang[..dash];
+			if (!chain.Contains(root))
+				chain.Add(root);
 		}
 
 		/// <summary>
@@ -174,10 +190,10 @@ namespace Nox.CCK.Language {
 		#if UNITY_EDITOR
 		[UnityEditor.MenuItem("Nox/Tools/Reload LanguageTexts")]
 		public static void ReloadLanguageTexts()
-			=> UpdateTexts();		
+			=> UpdateTexts();
 		#endif
 
-        public static string Get(string language, string key) 
+        public static string Get(string language, string key)
 			=> GetInPacks(language, key);
 
 		public static string Get(string key, params object[] args) {
@@ -220,11 +236,8 @@ namespace Nox.CCK.Language {
 		}
 
 		public static void RemovePack(LanguagePack pack) {
-			if (!LanguagePacks.Contains(pack)) {
-				Logger.LogWarning("Attempted to remove a language pack that is not in the list.", pack);
+			if (!LanguagePacks.Remove(pack))
 				return;
-			}
-			LanguagePacks.Remove(pack);
 			InvalidatePacks();
 			OnPackListUpdated.Invoke();
 		}

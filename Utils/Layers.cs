@@ -12,9 +12,16 @@ namespace Nox.CCK.Utils {
 	/// Utility class for managing Unity layers,
 	/// including checking for existence,
 	/// creating layers,
+	/// building masks from layer names,
 	/// and setting/getting layers on transforms.
 	/// </summary>
 	public static class Layers {
+		/// <summary>
+		/// Built-in layer the player-facing UI sits on: menus, nameplates, mirror panels and the hover glow.
+		/// Nothing a reflection should show, so the mirror settings never render it.
+		/// </summary>
+		public const string Ui = "UI";
+
 		/// <summary>
 		/// Checks if a layer with the specified name exists in the project.
 		/// </summary>
@@ -62,7 +69,7 @@ namespace Nox.CCK.Utils {
 			Logger.LogDebug($"{names.Length} layers created: {string.Join(", ", names)}");
 		}
 		#else
-		public static void CreateLayers(string[] names) 
+		public static void CreateLayers(string[] names)
 			=> throw new System.NotSupportedException("Creating layers is only supported in the Unity Editor.");
 		#endif
 
@@ -73,6 +80,53 @@ namespace Nox.CCK.Utils {
 		/// <param name="name"></param>
 		public static void CreateLayer(string name)
 			=> CreateLayers(new[] { name });
+
+		/// <summary>
+		/// Builds a layer mask from layer names.
+		/// <para>
+		/// A name that does not exist in the project is ignored instead of throwing, so a mask keeps working
+		/// on a build target or a project where an optional layer was never created.
+		/// </para>
+		/// </summary>
+		/// <param name="names">Layer names to include.</param>
+		/// <returns>The mask, 0 when no name matches.</returns>
+		public static LayerMask Mask(params string[] names)
+			=> MaskBits(names);
+
+		/// <summary>Bits of the mask built from layer names (see <see cref="Mask(string[])"/>).</summary>
+		/// <param name="names">Layer names to include.</param>
+		/// <returns>The mask bits, 0 when no name matches.</returns>
+		public static int MaskBits(params string[] names) {
+			var mask = 0;
+			if (names == null)
+				return mask;
+
+			for (var i = 0; i < names.Length; i++) {
+				var layer = LayerMask.NameToLayer(names[i]);
+				if (layer >= 0)
+					mask |= 1 << layer;
+			}
+
+			return mask;
+		}
+
+		/// <summary>Whether a layer index is part of a mask.</summary>
+		/// <param name="mask">Mask to inspect.</param>
+		/// <param name="layer">Layer index.</param>
+		public static bool Contains(this LayerMask mask, int layer)
+			=> layer >= 0 && layer < 32 && (mask.value & (1 << layer)) != 0;
+
+		/// <summary>Whether a named layer is part of a mask (false when the layer does not exist).</summary>
+		/// <param name="mask">Mask to inspect.</param>
+		/// <param name="name">Layer name.</param>
+		public static bool Contains(this LayerMask mask, string name)
+			=> mask.Contains(LayerMask.NameToLayer(name));
+
+		/// <summary>Whether a layer index is part of a mask given as bits.</summary>
+		/// <param name="mask">Mask bits to inspect.</param>
+		/// <param name="layer">Layer index.</param>
+		public static bool Contains(int mask, int layer)
+			=> layer >= 0 && layer < 32 && (mask & (1 << layer)) != 0;
 
 		/// <summary>
 		/// Gets a dictionary of all defined layers in the project,
@@ -104,10 +158,29 @@ namespace Nox.CCK.Utils {
 				if (!string.IsNullOrEmpty(name))
 					results.Add(name, i);
 			}
-			
+
 			return results;
 		}
 		#endif
+
+		/// <summary>
+		/// Layers the engine keeps for itself. They hold nothing a player would choose to show or hide, so they
+		/// are left out of the layer lists offered to the user (see <see cref="GetVisibleLayers"/>).
+		/// </summary>
+		public static readonly string[] HiddenLayers = {
+			"TransparentFX", "Ignore Raycast", "Water"
+		};
+
+		/// <summary>
+		/// Gets the defined layers of the project without <see cref="HiddenLayers"/>,
+		/// in layer index order: what a layer list should offer.
+		/// </summary>
+		/// <returns>Layer names mapped to their corresponding indices.</returns>
+		public static Dictionary<string, int> GetVisibleLayers()
+			=> GetLayers()
+				.Where(pair => !HiddenLayers.Contains(pair.Key))
+				.OrderBy(pair => pair.Value)
+				.ToDictionary(pair => pair.Key, pair => pair.Value);
 
 		/// <summary>
 		/// Sets the layer of a transform and optionally all its children.

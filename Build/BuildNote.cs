@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Nox.CCK.Build {
 	/// <summary>
 	/// Free-form note attached to an object. The content is purely informational (reminders, credits,
-	/// instructions…) and the whole component is stripped from the asset during the build, so it never
+	/// instructions...) and the whole component is stripped from the asset during the build, so it never
 	/// reaches the published bundle.
 	/// </summary>
 	[AddComponentMenu("Nox/Build/Build Note")]

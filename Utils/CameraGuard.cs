@@ -12,8 +12,10 @@ namespace Nox.CCK.Utils {
 	/// (rig, mains, contrôleurs) de rendre dans les <b>yeux XR</b> ou de prendre le dessus sur
 	/// l'<b>écran bureau</b>.
 	/// <para>
-	/// Une caméra neutralisée <b>reste active</b> : on ne touche qu'à sa capacité à rendre dans le
-	/// casque et sur l'écran.
+	/// Une caméra neutralisée ne rend plus rien : masque de culling vidé, pas de clear, puis le
+	/// composant lui-même est désactivé (sauf si un Canvas l'utilise encore comme
+	/// <c>worldCamera</c>, voir <see cref="DisableNeutralizedCameras"/>). L'état initial est mémorisé
+	/// pour pouvoir la restaurer si elle redevient légitime.
 	/// </para>
 	/// <list type="bullet">
 	/// <item><c>stereoTargetEye = None</c> : elle ne peut plus écrire dans les textures d'yeux.</item>
@@ -27,8 +29,8 @@ namespace Nox.CCK.Utils {
 	/// l'écran).
 	/// </summary>
 	public static class CameraGuard {
-		private static readonly List<Camera>    _allowed     = new();
-		private static readonly List<Transform> _roots       = new();
+		private static readonly List<Camera> _allowed = new();
+		private static readonly List<Transform> _roots = new();
 		private static readonly HashSet<Camera> _neutralized = new();
 
 		/// <summary>
@@ -43,21 +45,32 @@ namespace Nox.CCK.Utils {
 
 		/// <summary>État initial d'une caméra, mémorisé avant neutralisation.</summary>
 		private struct CameraState {
-			public RenderTexture       TargetTexture;
+			public RenderTexture TargetTexture;
 			public StereoTargetEyeMask StereoTargetEye;
-			public string              Tag;
+			public string Tag;
+			public int CullingMask;
+			public CameraClearFlags ClearFlags;
+			public bool Enabled;
 		}
 
 		private static RenderTexture _offscreen;
-		private static bool          _installed;
-		private static float         _nextScan;
-		private static int           _lastCameraCount = -1;
+		private static bool _installed;
+		private static float _nextScan;
+		private static int _lastCameraCount = -1;
 
 		/// <summary>Intervalle minimal (secondes) entre deux balayages de sécurité.</summary>
 		private const float ScanInterval = 1f;
 
 		/// <summary>Coupe entièrement le garde-fou (diagnostic). Le garde-fou reste installé.</summary>
 		public static bool Enabled { get; set; } = true;
+
+		/// <summary>
+		/// Désactive le composant des caméras neutralisées (elles ne dessinent plus rien : masque 0 et
+		/// pas de clear). Une caméra laissée active coûte encore un passage de caméra URP complet par
+		/// frame, mesuré à ~0.6-0.9 ms de main thread. Reste <c>false</c> pour une caméra encore
+		/// utilisée comme <c>worldCamera</c> d'un Canvas (raycasts UI en world-space).
+		/// </summary>
+		public static bool DisableNeutralizedCameras { get; set; } = true;
 
 		/// <summary>
 		/// Tag posé sur les caméras gérées par le garde-fou, à la place de <c>Untagged</c>, pour
@@ -76,7 +89,7 @@ namespace Nox.CCK.Utils {
 
 			_installed = true;
 			RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
-			Application.onBeforeRender                    += OnBeforeRender;
+			Application.onBeforeRender += OnBeforeRender;
 			Logger.LogDebug("Camera guard installed", tag: nameof(CameraGuard));
 		}
 
@@ -86,7 +99,7 @@ namespace Nox.CCK.Utils {
 
 			_installed = false;
 			RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
-			Application.onBeforeRender                    -= OnBeforeRender;
+			Application.onBeforeRender -= OnBeforeRender;
 			Clear();
 			RestoreAll();
 			_protected.Clear();
@@ -191,6 +204,11 @@ namespace Nox.CCK.Utils {
 				camera.targetTexture = state.TargetTexture;
 
 			camera.stereoTargetEye = state.StereoTargetEye;
+			camera.cullingMask = state.CullingMask;
+			camera.clearFlags = state.ClearFlags;
+
+			if (camera.enabled != state.Enabled)
+				camera.enabled = state.Enabled;
 
 			if (state.Tag != null && camera.CompareTag(NeutralizedTag))
 				camera.tag = state.Tag;
@@ -247,6 +265,18 @@ namespace Nox.CCK.Utils {
 				camera.tag = "Untagged";
 			}
 		}
+
+		/// <summary>
+		/// Vrai si un Canvas utilise cette caméra comme caméra de rendu/événements : elle doit alors
+		/// rester active pour fournir ses matrices aux raycasts (UI en world-space).
+		/// </summary>
+		private static bool IsUsedByCanvas(Camera camera) {
+			var canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+			foreach (var canvas in canvases)
+				if (canvas.worldCamera == camera)
+					return true;
+			return false;
+		}
 		// ── Enforcement ──────────────────────────────────────────────────────────
 
 		private static void OnBeforeRender() {
@@ -258,11 +288,11 @@ namespace Nox.CCK.Utils {
 			// On rescanne immédiatement quand le nombre de caméras actives change (apparition d'une
 			// caméra étrangère), sinon au plus une fois par <see cref="ScanInterval"/>.
 			var count = Camera.allCamerasCount;
-			var now   = Time.unscaledTime;
+			var now = Time.unscaledTime;
 			if (count == _lastCameraCount && now < _nextScan)
 				return;
 			_lastCameraCount = count;
-			_nextScan        = now + ScanInterval;
+			_nextScan = now + ScanInterval;
 
 			var cameras = Camera.allCameras;
 			for (var i = 0; i < cameras.Length; i++)
@@ -293,9 +323,12 @@ namespace Nox.CCK.Utils {
 			// redevient légitime (ex. un contrôleur redevient courant).
 			if (!_originals.ContainsKey(cam))
 				_originals[cam] = new CameraState {
-					TargetTexture   = cam.targetTexture,
+					TargetTexture = cam.targetTexture,
 					StereoTargetEye = cam.stereoTargetEye,
-					Tag             = cam.tag
+					Tag = cam.tag,
+					CullingMask = cam.cullingMask,
+					ClearFlags = cam.clearFlags,
+					Enabled = cam.enabled
 				};
 
 			// 1) Plus jamais dans les yeux XR.
@@ -307,10 +340,24 @@ namespace Nox.CCK.Utils {
 			//    écran->rayon des EventSystem/GraphicRaycaster.
 			cam.targetTexture = GetOffscreen();
 
+			// 2bis) Cette cible n'est lue par personne : la caméra n'a donc plus rien à dessiner.
+			// Sans ça elle rendait toute la scène une seconde fois par frame (plein écran, avec
+			// clear) dans une RenderTexture jetée, en plus du rendu du joueur.
+			if (cam.cullingMask != 0)
+				cam.cullingMask = 0;
+			if (cam.clearFlags != CameraClearFlags.Nothing)
+				cam.clearFlags = CameraClearFlags.Nothing;
+
 			// 3) Plus jamais « caméra principale » : on la marque comme gérée par le garde-fou
 			//    (sans écraser un éventuel tag personnalisé).
 			if (cam.CompareTag("MainCamera") || cam.CompareTag("Untagged"))
 				ApplyNeutralizedTag(cam);
+
+			// 4) Elle ne dessine plus rien : la laisser active coûte quand même un passage de caméra
+			//    URP complet. On la sort du rendu, sauf si un Canvas l'utilise comme worldCamera
+			//    (il a alors besoin de ses matrices pour les raycasts).
+			if (DisableNeutralizedCameras && cam.enabled && !IsUsedByCanvas(cam))
+				cam.enabled = false;
 
 			if (_neutralized.Add(cam))
 				Logger.LogWarning(
@@ -329,7 +376,7 @@ namespace Nox.CCK.Utils {
 			var h = Mathf.Max(2, Screen.height);
 
 			_offscreen = new RenderTexture(w, h, 16, RenderTextureFormat.Default) {
-				name      = "CameraGuard (offscreen)",
+				name = "CameraGuard (offscreen)",
 				hideFlags = HideFlags.HideAndDontSave
 			};
 			_offscreen.Create();
@@ -382,10 +429,7 @@ namespace Nox.CCK.Utils {
 				return;
 
 			_offscreen.Release();
-			if (Application.isPlaying)
-				Object.Destroy(_offscreen);
-			else
-				Object.DestroyImmediate(_offscreen);
+			_offscreen.Destroy();
 			_offscreen = null;
 		}
 	}

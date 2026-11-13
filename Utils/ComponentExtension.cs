@@ -30,12 +30,59 @@ namespace Nox.CCK.Utils {
 			=> component && component.gameObject.IsActive();
 
 		/// <summary>
+		/// Whether the object is selected in the editor — always <c>false</c> at runtime, so a caller can use it
+		/// without pulling <c>UnityEditor</c> in (see the gizmos of a component, that change colour with the
+		/// selection).
+		/// </summary>
+		public static bool IsSelected(this GameObject gameObject) {
+			#if UNITY_EDITOR
+			return gameObject && UnityEditor.Selection.Contains(gameObject);
+			#else
+			return false;
+			#endif
+		}
+
+		/// <summary>Whether the <see cref="Component.gameObject"/> is selected (see <see cref="IsSelected(GameObject)"/>).</summary>
+		public static bool IsSelected(this Component component)
+			=> component && component.gameObject.IsSelected();
+
+		/// <summary>
 		/// Whether the object is gone and must not be used: <c>true</c> when the reference is <c>null</c> or
 		/// when the object was destroyed. Unity's <c>== null</c> already answers <c>true</c> for a destroyed
 		/// object, so the two cases are deliberately not told apart.
 		/// </summary>
 		public static bool IsDestroyed(this Object @object)
 			=> !@object;
+
+		/// <summary>
+		/// Copy of an object: same type, same serialized values, not saved. Goes through this helper so the call
+		/// sites do not call <see cref="Object.Instantiate(Object)"/> directly.
+		/// </summary>
+		public static T Copy<T>(this T @object)
+			where T : Object
+			=> @object ? Object.Instantiate(@object) : null;
+
+		#if UNITY_EDITOR
+		/// <summary>
+		/// Marks <paramref name="gameObject"/> dirty, and its scene with it. A field changed from code does
+		/// not flag the scene on its own: it is then reloaded from disk — losing the change — the next time
+		/// it is opened, including by a build.
+		/// </summary>
+		public static void MarkDirty(this GameObject gameObject) {
+			if (!gameObject)
+				return;
+
+			UnityEditor.EditorUtility.SetDirty(gameObject);
+
+			var scene = gameObject.scene;
+			if (scene.IsValid() && scene.isLoaded)
+				UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+		}
+
+		/// <summary>Marks the <see cref="Component.gameObject"/> dirty (see <see cref="MarkDirty(GameObject)"/>).</summary>
+		public static void MarkDirty(this Component component)
+			=> component.gameObject.MarkDirty();
+		#endif
 
 
 		public static T GetComponentInParents<T>(this GameObject gameObject, bool includeInactive = false) {
@@ -171,24 +218,22 @@ namespace Nox.CCK.Utils {
 
 		public static void Destroy(this Object @object) {
 			#if UNITY_EDITOR
-			if (Application.isPlaying)
+			if (Application.isPlaying) {
 				Object.Destroy(@object);
-			else
-				UnityEditor.EditorApplication.delayCall += () => Object.DestroyImmediate(@object);
+				return;
+			}
+
+			UnityEditor.EditorApplication.delayCall += () => Object.DestroyImmediate(@object);
 			#else
 			Object.Destroy(@object);
 			#endif
 		}
 
 		public static void DestroyImmediate(this Object @object) {
-			#if UNITY_EDITOR
-			if (Application.isPlaying)
-				Object.DestroyImmediate(@object);
-			else
-				UnityEditor.EditorApplication.delayCall += () => Object.DestroyImmediate(@object);
-			#else
+			if (!@object)
+				return;
+
 			Object.DestroyImmediate(@object);
-			#endif
 		}
 
 		public static GameObject Find(this GameObject parent, string name) {
@@ -226,5 +271,8 @@ namespace Nox.CCK.Utils {
                 components[j] = gameObject.GetComponentAtIndex(j);
 			return components;
 		}
+
+		public static T[] Find<T>(FindObjectsInactive includeInactive = FindObjectsInactive.Exclude) where T : Object
+			=> Object.FindObjectsByType<T>(includeInactive);
 	}
 }

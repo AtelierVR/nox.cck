@@ -9,8 +9,8 @@ using Cysharp.Threading.Tasks;
 namespace Nox.CCK.Utils {
 	/// <summary>
 	/// Hash helpers. The typeless overloads return a bare lowercase hexadecimal digest, while the
-	/// typed overloads (<c>Hash(type, …)</c>) return the typed value <c>&lt;type&gt;:&lt;hex&gt;</c>
-	/// used by the asset pipeline (e.g. <c>sha256:0123…</c>).
+	/// typed overloads (<c>Hash(type, ...)</c>) return the typed value <c>&lt;type&gt;:&lt;hex&gt;</c>
+	/// used by the asset pipeline (e.g. <c>sha256:0123...</c>).
 	/// </summary>
 	public static class Hashing {
 		/// <summary>Algorithm used by the typeless overloads and when no type is given.</summary>

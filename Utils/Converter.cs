@@ -41,189 +41,190 @@ namespace Nox.CCK {
 
 		public static bool ToBool(this object value)
 			=> value switch {
-				bool b    => b,
-				byte b    => b  != 0,
-				short s   => s  != 0,
+				bool b => b,
+				byte b => b != 0,
+				short s => s != 0,
 				ushort us => us != 0,
-				long l    => l  != 0,
-				ulong ul  => ul != 0,
-				int i     => i  != 0,
-				uint ui   => ui != 0,
-				float f   => !Mathf.Approximately(f, 0f),
-				double d  => !Mathf.Approximately((float)d, 0f),
-				byte[] b  => b.Length > 0                     && b[0] != 0,
-				string s  => bool.TryParse(s, out var result) && result,
-				_         => false
+				long l => l != 0,
+				ulong ul => ul != 0,
+				int i => i != 0,
+				uint ui => ui != 0,
+				float f => !Mathf.Approximately(f, 0f),
+				double d => !Mathf.Approximately((float)d, 0f),
+				byte[] b => b.Length > 0 && b[0] != 0,
+				string s => bool.TryParse(s, out var result) && result,
+				_ => false
 			};
 
 		public static byte ToByte(this object value)
 			=> value switch {
-				bool b    => b ? (byte)1 : (byte)0,
-				byte b    => b,
-				short s   => (byte)s,
+				bool b => b ? (byte)1 : (byte)0,
+				byte b => b,
+				short s => (byte)s,
 				ushort us => (byte)us,
-				long l    => (byte)l,
-				ulong ul  => (byte)ul,
-				int i     => (byte)i,
-				uint ui   => (byte)ui,
-				float f   => (byte)f,
-				double d  => (byte)d,
-				byte[] b  => b.Length >= 1 ? b[0] : (byte)0,
-				string s  => byte.TryParse(s, out var result) ? result : (byte)0,
-				_         => 0
+				long l => (byte)l,
+				ulong ul => (byte)ul,
+				int i => (byte)i,
+				uint ui => (byte)ui,
+				float f => (byte)f,
+				double d => (byte)d,
+				byte[] b => b.Length >= 1 ? b[0] : (byte)0,
+				string s => byte.TryParse(s, out var result) ? result : (byte)0,
+				_ => 0
 			};
 
 		public static short ToShort(this object value)
 			=> value switch {
-				bool b    => b ? (short)1 : (short)0,
-				byte b    => b,
-				short s   => s,
+				bool b => b ? (short)1 : (short)0,
+				byte b => b,
+				short s => s,
 				ushort us => (short)us,
-				long l    => (short)l,
-				ulong ul  => (short)ul,
-				int i     => (short)i,
-				uint ui   => (short)ui,
-				float f   => (short)f,
-				double d  => (short)d,
-				byte[] b  => b.Length >= 2 ? FromBigEndianInt16(b, 0) : (short)0,
-				string s  => short.TryParse(s, out var result) ? result : (short)0,
-				_         => 0
+				long l => (short)l,
+				ulong ul => (short)ul,
+				int i => (short)i,
+				uint ui => (short)ui,
+				float f => (short)f,
+				double d => (short)d,
+				byte[] b => b.Length >= 2 ? FromBigEndianInt16(b, 0) : (short)0,
+				string s => short.TryParse(s, out var result) ? result : (short)0,
+				_ => 0
 			};
 
 		public static ushort ToUShort(this object value)
 			=> value switch {
-				bool b    => b ? (ushort)1 : (ushort)0,
-				byte b    => b,
-				short s   => (ushort)s,
+				bool b => b ? (ushort)1 : (ushort)0,
+				byte b => b,
+				short s => (ushort)s,
 				ushort us => us,
-				long l    => (ushort)l,
-				ulong ul  => (ushort)ul,
-				int i     => (ushort)i,
-				uint ui   => (ushort)ui,
-				float f   => (ushort)f,
-				double d  => (ushort)d,
-				byte[] b  => b.Length >= 2 ? FromBigEndianUInt16(b, 0) : (ushort)0,
-				string s  => ushort.TryParse(s, out var result) ? result : (ushort)0,
-				_         => 0
+				long l => (ushort)l,
+				ulong ul => (ushort)ul,
+				int i => (ushort)i,
+				uint ui => (ushort)ui,
+				float f => (ushort)f,
+				double d => (ushort)d,
+				byte[] b => b.Length >= 2 ? FromBigEndianUInt16(b, 0) : (ushort)0,
+				string s => ushort.TryParse(s, out var result) ? result : (ushort)0,
+				_ => 0
 			};
 
 		public static int ToInt(this object value)
 			=> value switch {
-				bool b    => b ? 1 : 0,
-				byte b    => b,
-				short s   => s,
+				bool b => b ? 1 : 0,
+				byte b => b,
+				short s => s,
 				ushort us => us,
-				long l    => (int)l,
-				ulong ul  => (int)ul,
-				int i     => i,
-				uint ui   => (int)ui,
-				float f   => (int)f,
-				double d  => (int)d,
-				byte[] b  => b.Length >= 4 ? FromBigEndianInt32(b, 0) : 0,
-				string s  => int.TryParse(s, out var result) ? result : 0,
-				_         => 0
+				long l => (int)l,
+				ulong ul => (int)ul,
+				int i => i,
+				uint ui => (int)ui,
+				float f => (int)f,
+				double d => (int)d,
+
+				byte[] b => b.Length >= 4 ? FromBigEndianInt32(b, 0) : 0,
+				string s => int.TryParse(s, out var result) ? result : 0,
+				_ => 0
 			};
 
 		public static uint ToUInt(this object value)
 			=> value switch {
-				bool b    => b ? (uint)1 : (uint)0,
-				byte b    => b,
-				short s   => (uint)s,
+				bool b => b ? (uint)1 : (uint)0,
+				byte b => b,
+				short s => (uint)s,
 				ushort us => us,
-				long l    => (uint)l,
-				ulong ul  => (uint)ul,
-				int i     => (uint)i,
-				uint ui   => ui,
-				float f   => (uint)f,
-				double d  => (uint)d,
-				byte[] b  => b.Length >= 4 ? FromBigEndianUInt32(b, 0) : (uint)0,
-				string s  => uint.TryParse(s, out var result) ? result : (uint)0,
-				_         => 0
+				long l => (uint)l,
+				ulong ul => (uint)ul,
+				int i => (uint)i,
+				uint ui => ui,
+				float f => (uint)f,
+				double d => (uint)d,
+				byte[] b => b.Length >= 4 ? FromBigEndianUInt32(b, 0) : (uint)0,
+				string s => uint.TryParse(s, out var result) ? result : (uint)0,
+				_ => 0
 			};
 
 		public static long ToLong(this object value)
 			=> value switch {
-				bool b    => b ? 1L : 0L,
-				byte b    => b,
-				short s   => s,
+				bool b => b ? 1L : 0L,
+				byte b => b,
+				short s => s,
 				ushort us => us,
-				long l    => l,
-				ulong ul  => (long)ul,
-				int i     => i,
-				uint ui   => ui,
-				float f   => (long)f,
-				double d  => (long)d,
-				byte[] b  => b.Length >= 8 ? FromBigEndianInt64(b, 0) : 0L,
-				string s  => long.TryParse(s, out var result) ? result : 0L,
-				_         => 0L
+				long l => l,
+				ulong ul => (long)ul,
+				int i => i,
+				uint ui => ui,
+				float f => (long)f,
+				double d => (long)d,
+				byte[] b => b.Length >= 8 ? FromBigEndianInt64(b, 0) : 0L,
+				string s => long.TryParse(s, out var result) ? result : 0L,
+				_ => 0L
 			};
 
 		public static ulong ToULong(this object value)
 			=> value switch {
-				bool b    => b ? 1UL : 0UL,
-				byte b    => b,
-				short s   => (ulong)s,
+				bool b => b ? 1UL : 0UL,
+				byte b => b,
+				short s => (ulong)s,
 				ushort us => us,
-				long l    => (ulong)l,
-				ulong ul  => ul,
-				int i     => (ulong)i,
-				uint ui   => ui,
-				float f   => (ulong)f,
-				double d  => (ulong)d,
-				byte[] b  => b.Length >= 8 ? FromBigEndianUInt64(b, 0) : 0UL,
-				string s  => ulong.TryParse(s, out var result) ? result : 0UL,
-				_         => 0UL
+				long l => (ulong)l,
+				ulong ul => ul,
+				int i => (ulong)i,
+				uint ui => ui,
+				float f => (ulong)f,
+				double d => (ulong)d,
+				byte[] b => b.Length >= 8 ? FromBigEndianUInt64(b, 0) : 0UL,
+				string s => ulong.TryParse(s, out var result) ? result : 0UL,
+				_ => 0UL
 			};
 
 		public static float ToFloat(this object value)
 			=> value switch {
-				bool b    => b ? 1f : 0f,
-				byte b    => b,
-				short s   => s,
+				bool b => b ? 1f : 0f,
+				byte b => b,
+				short s => s,
 				ushort us => us,
-				long l    => l,
-				ulong ul  => ul,
-				int i     => i,
-				uint ui   => ui,
-				float f   => f,
-				double d  => (float)d,
-				byte[] b  => b.Length >= 4 ? FromBigEndianSingle(b, 0) : 0f,
-				string s  => float.TryParse(s, out var result) ? result : 0f,
-				_         => 0f
+				long l => l,
+				ulong ul => ul,
+				int i => i,
+				uint ui => ui,
+				float f => f,
+				double d => (float)d,
+				byte[] b => b.Length >= 4 ? FromBigEndianSingle(b, 0) : 0f,
+				string s => float.TryParse(s, out var result) ? result : 0f,
+				_ => 0f
 			};
 
 		public static double ToDouble(this object value)
 			=> value switch {
-				bool b    => b ? 1.0 : 0.0,
-				byte b    => b,
-				short s   => s,
+				bool b => b ? 1.0 : 0.0,
+				byte b => b,
+				short s => s,
 				ushort us => us,
-				long l    => l,
-				ulong ul  => ul,
-				int i     => i,
-				uint ui   => ui,
-				float f   => f,
-				double d  => d,
-				byte[] b  => b.Length >= 8 ? FromBigEndianDouble(b, 0) : 0.0,
-				string s  => double.TryParse(s, out var result) ? result : 0.0,
-				_         => 0.0
+				long l => l,
+				ulong ul => ul,
+				int i => i,
+				uint ui => ui,
+				float f => f,
+				double d => d,
+				byte[] b => b.Length >= 8 ? FromBigEndianDouble(b, 0) : 0.0,
+				string s => double.TryParse(s, out var result) ? result : 0.0,
+				_ => 0.0
 			};
 
 		public static string ToString(this object value)
 			=> value switch {
-				bool b    => b.ToString(),
-				byte b    => b.ToString(),
-				short s   => s.ToString(),
+				bool b => b.ToString(),
+				byte b => b.ToString(),
+				short s => s.ToString(),
 				ushort us => us.ToString(),
-				long l    => l.ToString(),
-				ulong ul  => ul.ToString(),
-				int i     => i.ToString(),
-				uint ui   => ui.ToString(),
-				float f   => f.ToString(CultureInfo.InvariantCulture),
-				double d  => d.ToString(CultureInfo.InvariantCulture),
-				byte[] b  => Encoding.UTF8.GetString(b),
-				string s  => s,
-				_         => value?.ToString() ?? ""
+				long l => l.ToString(),
+				ulong ul => ul.ToString(),
+				int i => i.ToString(),
+				uint ui => ui.ToString(),
+				float f => f.ToString(CultureInfo.InvariantCulture),
+				double d => d.ToString(CultureInfo.InvariantCulture),
+				byte[] b => Encoding.UTF8.GetString(b),
+				string s => s,
+				_ => value?.ToString() ?? ""
 			};
 
 		public static Vector3 ToVector3(this object value)
@@ -236,6 +237,38 @@ namespace Nox.CCK {
 				),
 				_ => Vector3.zero
 			};
+
+		/// <summary>
+		/// Reads a colour from a <see cref="Color"/>, a packed ARGB <see cref="int"/> (the legacy
+		/// Animator form), a 4-byte RGBA buffer or a 16-byte big-endian RGBA buffer (the network form
+		/// used by <c>Serializer</c>). Unknown values give <see cref="Color.clear"/>.
+		/// </summary>
+		public static Color ToColor(this object value)
+			=> value switch {
+				Color c => c,
+				Color32 c32 => (Color)c32,
+				byte b => FromPacked((int)b),
+				short s => FromPacked(s),
+				ushort us => FromPacked(us),
+				int i => FromPacked(i),
+				uint ui => FromPacked((int)ui),
+				long l => FromPacked((int)l),
+				ulong ul => FromPacked((int)ul),
+				float f => FromPacked((int)f),
+				double d => FromPacked((int)d),
+				byte[] { Length: 16 } b => new Color(
+					FromBigEndianSingle(b, 0),
+					FromBigEndianSingle(b, 4),
+					FromBigEndianSingle(b, 8),
+					FromBigEndianSingle(b, 12)
+				),
+				byte[] { Length: 4 } b => new Color32(b[0], b[1], b[2], b[3]),
+				string s => ColorUtility.TryParseHtmlString(s, out var parsed) ? parsed : FromPacked(int.TryParse(s, out var packed) ? packed : 0),
+				_ => Color.clear
+			};
+
+		private static Color FromPacked(int packed)
+			=> new Color32((byte)(packed >> 24), (byte)(packed >> 16), (byte)(packed >> 8), (byte)packed);
 
 		public static Quaternion ToQuaternion(this object value)
 			=> value switch {
@@ -279,54 +312,60 @@ namespace Nox.CCK {
 
 		public static byte[] ToBytes(this object value)
 			=> value switch {
-				string str   => Encoding.UTF8.GetBytes(str),
+				string str => Encoding.UTF8.GetBytes(str),
 				byte[] bytes => bytes,
-				bool b       => new[] { b ? (byte)1 : (byte)0 },
-				byte b       => new[] { b },
-				short s      => new[] { (byte)(s >> 8), (byte)s },
-				ushort us    => new[] { (byte)(us >> 8), (byte)us },
-				int i        => new[] {
+				bool b => new[] { b ? (byte)1 : (byte)0 },
+				byte b => new[] { b },
+				short s => new[] { (byte)(s >> 8), (byte)s },
+				ushort us => new[] { (byte)(us >> 8), (byte)us },
+				int i => new[] {
 					(byte)(i >> 24), (byte)(i >> 16),
 					(byte)(i >> 8),  (byte)i
 				},
-				uint ui      => new[] {
+				uint ui => new[] {
 					(byte)(ui >> 24), (byte)(ui >> 16),
 					(byte)(ui >> 8),  (byte)ui
 				},
-				long l       => new[] {
+				long l => new[] {
 					(byte)(l >> 56), (byte)(l >> 48),
 					(byte)(l >> 40), (byte)(l >> 32),
 					(byte)(l >> 24), (byte)(l >> 16),
 					(byte)(l >> 8),  (byte)l
 				},
-				ulong ul     => new[] {
+				ulong ul => new[] {
 					(byte)(ul >> 56), (byte)(ul >> 48),
 					(byte)(ul >> 40), (byte)(ul >> 32),
 					(byte)(ul >> 24), (byte)(ul >> 16),
 					(byte)(ul >> 8),  (byte)ul
 				},
-				float f      => ToBigEndianBytes(f),
-				double d     => ToBigEndianBytes(d),
-				Vector3 v    => Combine(
-					ToBigEndianBytes(v.x), 
-					ToBigEndianBytes(v.y), 
+				float f => ToBigEndianBytes(f),
+				double d => ToBigEndianBytes(d),
+				Vector3 v => Combine(
+					ToBigEndianBytes(v.x),
+					ToBigEndianBytes(v.y),
 					ToBigEndianBytes(v.z)
 				),
 				Quaternion q => Combine(
-					ToBigEndianBytes(q.x), 
-					ToBigEndianBytes(q.y), 
-					ToBigEndianBytes(q.z), 
+					ToBigEndianBytes(q.x),
+					ToBigEndianBytes(q.y),
+					ToBigEndianBytes(q.z),
 					ToBigEndianBytes(q.w)
 				),
-				_            => Array.Empty<byte>()
+				Color c => Combine(
+					ToBigEndianBytes(c.r),
+					ToBigEndianBytes(c.g),
+					ToBigEndianBytes(c.b),
+					ToBigEndianBytes(c.a)
+				),
+				_ => Array.Empty<byte>()
 			};
 
 		/// <summary>
 		/// Encode des octets en chaîne Base64.
 		/// </summary>
 		public static string ToBase64(byte[] bytes)
-			=> bytes == null || bytes.Length == 0 
-				? string.Empty 
+			=> bytes == null || bytes.Length == 0
+				? string.Empty
 				: Convert.ToBase64String(bytes);
 
 		/// <summary>
@@ -334,16 +373,12 @@ namespace Nox.CCK {
 		/// Retourne <see langword="null"/> si la chaîne est vide ou n'est pas du Base64
 		/// valide (données legacy/corrompues), sans lever d'exception.
 		/// </summary>
-		public static byte[] FromBase64(string value)
-		{
+		public static byte[] FromBase64(string value) {
 			if (string.IsNullOrEmpty(value))
 				return null;
-			try
-			{
+			try {
 				return Convert.FromBase64String(value);
-			}
-			catch (FormatException)
-			{
+			} catch (FormatException) {
 				return null;
 			}
 		}
@@ -352,26 +387,26 @@ namespace Nox.CCK {
 		/// Convertit une valeur quelconque vers le type demandé <typeparamref name="T"/>
 		/// (valeur par défaut du type quand la conversion n'est pas supportée).
 		/// </summary>
-		public static T To<T>(this object value)
-		{
+		public static T To<T>(this object value) {
 			if (value is T typed)
 				return typed;
 
 			return typeof(T) switch {
-				Type t when t == typeof(bool)       => (T)(object)value.ToBool(),
-				Type t when t == typeof(byte)       => (T)(object)value.ToByte(),
-				Type t when t == typeof(short)      => (T)(object)value.ToShort(),
-				Type t when t == typeof(ushort)     => (T)(object)value.ToUShort(),
-				Type t when t == typeof(int)        => (T)(object)value.ToInt(),
-				Type t when t == typeof(uint)       => (T)(object)value.ToUInt(),
-				Type t when t == typeof(long)       => (T)(object)value.ToLong(),
-				Type t when t == typeof(ulong)      => (T)(object)value.ToULong(),
-				Type t when t == typeof(float)      => (T)(object)value.ToFloat(),
-				Type t when t == typeof(double)     => (T)(object)value.ToDouble(),
-				Type t when t == typeof(string)     => (T)(object)ToString(value),
-				Type t when t == typeof(Vector3)    => (T)(object)value.ToVector3(),
+				Type t when t == typeof(bool) => (T)(object)value.ToBool(),
+				Type t when t == typeof(byte) => (T)(object)value.ToByte(),
+				Type t when t == typeof(short) => (T)(object)value.ToShort(),
+				Type t when t == typeof(ushort) => (T)(object)value.ToUShort(),
+				Type t when t == typeof(int) => (T)(object)value.ToInt(),
+				Type t when t == typeof(uint) => (T)(object)value.ToUInt(),
+				Type t when t == typeof(long) => (T)(object)value.ToLong(),
+				Type t when t == typeof(ulong) => (T)(object)value.ToULong(),
+				Type t when t == typeof(float) => (T)(object)value.ToFloat(),
+				Type t when t == typeof(double) => (T)(object)value.ToDouble(),
+				Type t when t == typeof(string) => (T)(object)ToString(value),
+				Type t when t == typeof(Vector3) => (T)(object)value.ToVector3(),
 				Type t when t == typeof(Quaternion) => (T)(object)value.ToQuaternion(),
-				_                                   => default
+				Type t when t == typeof(Color) => (T)(object)value.ToColor(),
+				_ => default
 			};
 		}
 
@@ -380,20 +415,21 @@ namespace Nox.CCK {
 		/// </summary>
 		public static T To<T>(this byte[] value)
 			=> typeof(T) switch {
-				Type t when t == typeof(bool)       => (T)(object)value.ToBool(),
-				Type t when t == typeof(byte)       => (T)(object)value.ToByte(),
-				Type t when t == typeof(short)      => (T)(object)value.ToShort(),
-				Type t when t == typeof(ushort)     => (T)(object)value.ToUShort(),
-				Type t when t == typeof(int)        => (T)(object)value.ToInt(),
-				Type t when t == typeof(uint)       => (T)(object)value.ToUInt(),
-				Type t when t == typeof(long)       => (T)(object)value.ToLong(),
-				Type t when t == typeof(ulong)      => (T)(object)value.ToULong(),
-				Type t when t == typeof(float)      => (T)(object)value.ToFloat(),
-				Type t when t == typeof(double)     => (T)(object)value.ToDouble(),
-				Type t when t == typeof(string)     => (T)(object)ToString(value),
-				Type t when t == typeof(byte[])     => (T)(object)value,
-				Type t when t == typeof(Vector3)    => (T)(object)value.ToVector3(),
+				Type t when t == typeof(bool) => (T)(object)value.ToBool(),
+				Type t when t == typeof(byte) => (T)(object)value.ToByte(),
+				Type t when t == typeof(short) => (T)(object)value.ToShort(),
+				Type t when t == typeof(ushort) => (T)(object)value.ToUShort(),
+				Type t when t == typeof(int) => (T)(object)value.ToInt(),
+				Type t when t == typeof(uint) => (T)(object)value.ToUInt(),
+				Type t when t == typeof(long) => (T)(object)value.ToLong(),
+				Type t when t == typeof(ulong) => (T)(object)value.ToULong(),
+				Type t when t == typeof(float) => (T)(object)value.ToFloat(),
+				Type t when t == typeof(double) => (T)(object)value.ToDouble(),
+				Type t when t == typeof(string) => (T)(object)ToString(value),
+				Type t when t == typeof(byte[]) => (T)(object)value,
+				Type t when t == typeof(Vector3) => (T)(object)value.ToVector3(),
 				Type t when t == typeof(Quaternion) => (T)(object)value.ToQuaternion(),
+				Type t when t == typeof(Color) => (T)(object)value.ToColor(),
 				_ => throw new InvalidOperationException($"Unsupported type: {typeof(T)}")
 			};
 	}

@@ -62,8 +62,16 @@ namespace Nox.CCK.Utils {
 			return true;
 		}
 
+		/// <summary>
+		/// Writes a <see cref="DateTime"/> as Unix microseconds (UTC).
+		/// Microseconds, not milliseconds: a relay latency probe round trip is shorter than a
+		/// millisecond, the truncation would be larger than the measure itself.
+		/// </summary>
+		public bool Write(DateTime value)
+			=> Write((value.ToUniversalTime().Ticks - DateTime.UnixEpoch.Ticks) / 10);
+
 		public bool Write(DateTimeOffset value)
-			=> Write(value.ToUnixTimeMilliseconds());
+			=> Write(value.UtcDateTime);
 
 		public bool Write(int value) {
 			EnsureCapacity(4);
@@ -205,9 +213,13 @@ namespace Nox.CCK.Utils {
 			return value;
 		}
 
+		/// <summary>
+		/// Reads a <see cref="DateTime"/> written as Unix microseconds (UTC), a 1000x finer
+		/// resolution than the milliseconds it used to carry.
+		/// </summary>
 		public DateTime ReadDateTime() {
 			var value = ReadLong();
-			return DateTimeOffset.FromUnixTimeMilliseconds(value).DateTime;
+			return DateTime.UnixEpoch.AddTicks(value * 10);
 		}
 
 		public int ReadInt() {
@@ -354,7 +366,7 @@ namespace Nox.CCK.Utils {
 			buffer.Start();
 			return buffer;
 		}
-		
+
 		public static implicit operator ReadOnlyMemory<byte>(Buffer buffer)
 			=> buffer.ToArray();
 	}
