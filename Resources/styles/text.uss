@@ -116,5 +116,10 @@
     -unity-font-style: normal;
 }
 
+/* Secondary information: dimmed, without touching its size or its colour. */
+.muted {
+    opacity: 0.75;
+}
+
 
 

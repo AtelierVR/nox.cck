@@ -1,7 +1,6 @@
 .rounded-sm {
     border-radius: var(--small);
 }
-
 .rounded-md {
     border-radius: var(--medium);
 }
@@ -78,4 +77,11 @@
 .rounded-e-lg {
     border-top-right-radius: var(--large);
     border-bottom-right-radius: var(--large);
+}
+
+.rounded-none {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }

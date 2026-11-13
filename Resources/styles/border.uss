@@ -31,7 +31,6 @@
 .border-t-none {
     border-top-style: none;
 }
-
 .border-r-none {
     border-right-style: none;
 }
@@ -41,6 +40,13 @@
 }
 
 .border-l-none {
+    border-left-style: none;
+}
+
+.border-none {
+    border-top-style: none;
+    border-right-style: none;
+    border-bottom-style: none;
     border-left-style: none;
 }
 

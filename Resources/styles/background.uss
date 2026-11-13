@@ -40,6 +40,10 @@
     background-color: var(--color-white);
 }
 
+.bg-transparent {
+    background-color: rgba(0, 0, 0, 0);
+}
+
 .tint-primary {
     -unity-background-image-tint-color: var(--bg-primary);
 }

@@ -274,18 +274,32 @@
     --margin-medium: var(--medium);
     --margin-large: var(--large);
 
+    --error-accent: #ff6e40;
+    --warning-accent: #ffc107;
+    --success-accent: #00c700;
+    --info-accent: #64a0f0;
+
     --error-text: #ffffff;
     --warning-text: #ffffff;
     --success-text: #ffffff;
     --info-text: #ffffff;
 
-    --error-background: rgba(219, 61, 67, 0.5);
-    --warning-background: rgba(240, 96, 0, 0.5);
-    --success-background: rgba(43, 153, 102, 0.5);
-    --info-background: rgba(58, 91, 199, 0.5);
+    --error-background: var(--bg-secondary);
+    --warning-background: var(--bg-secondary);
+    --success-background: var(--bg-secondary);
+    --info-background: var(--bg-secondary);
 
-    --error-border: #b23134;
-    --warning-border: #c24e00;
-    --success-border: #217a4d;
-    --info-border: #2c4598;
+    --error-border: var(--error-accent);
+    --warning-border: var(--warning-accent);
+    --success-border: var(--success-accent);
+    --info-border: var(--info-accent);
+
+    --error-icon-texture: resource('icons/error');
+    --error-icon-color: var(--error-accent);
+    --warning-icon-texture: resource('icons/warning');
+    --warning-icon-color: var(--warning-accent);
+    --success-icon-texture: resource('icons/success');
+    --success-icon-color: var(--success-accent);
+    --info-icon-texture: resource('icons/info');
+    --info-icon-color: var(--info-accent);
 }

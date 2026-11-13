@@ -59,6 +59,11 @@
     flex-grow: 1;
 }
 
-.flex-shrink {
-    flex-shrink: 1;
+/* A child that must keep its size next to a text that can shrink (a button at the end of a row). */
+.flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+.flex-grow-0 {
+    flex-grow: 0;
 }

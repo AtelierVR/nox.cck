@@ -10,11 +10,18 @@ namespace Nox.CCK.Editor {
 	/// formatted with its <c>userData</c> as arguments, and is refreshed when the language changes. The header
 	/// title is localized too, through <see cref="TitleKey"/>.
 	/// </summary>
-	public abstract class LocalizedInspectorEditor<T> : InspectorEditor<T> where T : Object {
+	public abstract class LocalizedInspectorEditor<T> : InspectorEditor<T> where T : UnityEngine.Object {
 		/// <summary>
 		/// Language entry shown as the header title, or <c>null</c> to keep <see cref="InspectorEditor{T}.Title"/>.
 		/// </summary>
 		protected virtual string TitleKey => null;
+
+        /// <summary>
+        /// Title of the panel and of the header of the inspector window: the entry of <see cref="TitleKey"/>
+        /// when there is one, so the window header is localized too.
+        /// </summary>
+        protected override string Title
+                => TitleKey == null ? base.Title : LanguageManager.Get(TitleKey);
 
 		public override VisualElement CreateInspectorGUI() {
 			var root = base.CreateInspectorGUI();
@@ -39,15 +46,19 @@ namespace Nox.CCK.Editor {
 			LanguageManager.OnLanguageChanged.RemoveListener(OnLanguageChanged);
 		}
 
-		private void OnLanguageChanged(string language)
-			=> LocalizeTexts();
+		private void OnLanguageChanged(string language) {
+			LocalizeTexts();
+
+			// The header of the inspector window is drawn by IMGUI: it has to be repainted to pick the new title up.
+			UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+		}
 
 		/// <summary>
 		/// Applies the <c>lang-key</c> of every element of the panel — header included — with the arguments
 		/// currently held by their <c>userData</c>. Call it after assigning new arguments; the language change
-		/// calls it already.
+		/// calls it already. Override it to localize what is not a localized element (a field label).
 		/// </summary>
-		protected void LocalizeTexts() {
+		protected virtual void LocalizeTexts() {
 			// The header is not part of Content: walk the whole root so it follows the language too.
 			var panel = Root ?? Content;
 			if (panel != null)

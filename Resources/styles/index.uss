@@ -6,6 +6,7 @@
 @import "text.uss";
 @import "padding.uss";
 @import "margin.uss";
+@import "gap.uss";
 @import "flex.uss";
 @import "justify.uss";
 @import "align.uss";
@@ -21,6 +22,7 @@
 @import "badge.uss";
 @import "list.uss";
 @import "section.uss";
+@import "value.uss";
 
 .transition {
     transition-duration: 0.1s;
@@ -28,6 +30,24 @@
 
 .readonly .unity-object-field__selector {
     display: none;
+}
+
+/* Read-only value (a field built with `isReadOnly`): the box is sunk into the panel and the text is
+   dimmer, so it reads as "you cannot type here" next to the editable rows around it. */
+.readonly .unity-base-text-field__input,
+.readonly .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: rgba(210, 210, 210, 0.7);
+}
+
+/* Icon of an inspector header (see InspectorEditor): a small square next to the title. */
+.header-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 /* Foldout whose content is aligned with the panel, instead of being indented under its toggle. */

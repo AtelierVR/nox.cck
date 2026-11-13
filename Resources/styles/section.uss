@@ -1,3 +1,151 @@
 .section {
     padding: var(--padding-medium);
 }
+
+/*
+ * Foldout section: the heading carries the padding and the separator, the content is aligned with
+ * the panel instead of being indented under the arrow (use with the `foldout-flush` class).
+ */
+.section.unity-foldout {
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border-color);
+}
+
+.section.unity-foldout > .unity-foldout__toggle {
+    padding-top: 8px;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+}
+
+.section.unity-foldout > .unity-foldout__toggle .unity-foldout__text {
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+/* « large » foldout: taller header and bigger title, like the large fields of the form. */
+.section.unity-foldout.large > .unity-foldout__toggle {
+    min-height: 28px;
+}
+
+.section.unity-foldout.large > .unity-foldout__toggle .unity-foldout__text {
+    font-size: 18px;
+}
+
+.section.unity-foldout > .unity-foldout__content {
+    padding-top: 0;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+}
+
+/* Last section of a form: the rule belongs to the panel container, not to the foldout. */
+.section.unity-foldout.border-none {
+    border-bottom-width: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Panel structure (headers, rows, key/value lines, empty states)              */
+/* -------------------------------------------------------------------------- */
+
+/* Panel header: a title (and its actions) on one row, closed by a rule. */
+.header {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border-color);
+}
+
+/* Row of a list (a session, a player...): content on the left, actions on the right. */
+.row {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border-color);
+}
+
+/* Denser variant of a list row (a part, a property...). */
+.row-sm {
+    padding: 4px;
+}
+
+/* Fixed-width column of a row: the name/key, then the values that follow it. */
+.col-sm {
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.col-md {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.col-lg {
+    width: 150px;
+    flex-shrink: 0;
+}
+
+/* Key/value line of a details section. */
+.kv {
+    flex-direction: row;
+    margin-bottom: 4px;
+}
+
+.kv > .kv-label {
+    min-width: 120px;
+    opacity: 0.75;
+}
+
+.kv > .kv-value {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-shrink: 1;
+}
+
+/* Empty state: centred in the space left by the list, under the header. */
+.empty {
+    flex-grow: 1;
+    justify-content: center;
+    padding: 8px;
+}
+
+/* Small coloured square shown before a name (a team colour, a platform...). */
+.swatch {
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* Header of a group inside a list (a property group, a section of values...). */
+.group-header {
+    -unity-font-style: bold;
+    color: rgb(191, 217, 255);
+    margin-top: 10px;
+    margin-bottom: 2px;
+    margin-left: 2px;
+    padding-left: 6px;
+    border-left-width: 2px;
+    border-left-color: rgb(89, 140, 230);
+}
+
+/* Narrow last column of a row: the flags of a property, capped so the value keeps the room. */
+.col-flags {
+    max-width: 40%;
+    flex-shrink: 0;
+}
