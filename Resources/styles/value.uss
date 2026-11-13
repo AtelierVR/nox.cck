@@ -1,0 +1,175 @@
+/* Read-only value rows — shared by the inspectors that display live values
+   (avatar parameters, rigging parameters, ...).
+
+   The rows are built in code (see ParameterValueRow), so these classes only carry the
+   look: the name on the left, the value on the right, both keeping the same width
+   whatever the inspector shows.
+
+   The names match the ones the avatar parameter inspector already used, so both
+   inspectors render the same way. */
+
+/* Container of a value row: the box drawn around each entry of the list.
+   The row can be clicked (it opens the details popup), so the pointer and the selected state are shown
+   through the border: the background carries the « just changed » highlight, and the two must stay visible
+   at the same time. */
+.parameter-field {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    padding: 4px;
+    margin: 2px 0;
+    transition-property: background-color;
+    transition-duration: 0.5s;
+}
+
+.parameter-field:hover {
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.parameter-field.value-row-selected {
+    border-color: rgb(90, 150, 255);
+}
+
+/* « Just changed »: the class is put on the row for a few milliseconds when its value moves, then removed
+   and the background fades back (see the transition above). Declared after .parameter-field so its own
+   transition-duration wins, which makes the highlight appear at once. */
+.parameter-field.value-row-updated {
+    background-color: rgba(51, 153, 255, 0.5);
+    transition-duration: 0s;
+}
+
+/* Row of a value: the name on the left, the value on the right. One size for every list, whatever the
+   inspector shows, so the parameters of the avatar and of the rig look the same. */
+.value-row {
+    flex-direction: row;
+    align-items: center;
+    font-size: 11px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+/* Name of the entry: a fixed basis so the values of a list stay aligned, elided when the panel is too
+   narrow for it (the tooltip of the label carries the full name). */
+.value-row-name {
+    flex-basis: 170px;
+    flex-grow: 0;
+    flex-shrink: 1;
+    min-width: 48px;
+    margin-right: 8px;
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Name of a row that has no value on its right (an IK target, a backend): it takes the remaining width,
+   so the badge of the row stays on the right. Declared after .value-row-name, which sets flex-grow: 0. */
+.value-row-fill {
+    flex-grow: 1;
+}
+
+/* Value of the entry: takes the remaining width and is elided instead of pushing the row. */
+.value-row-value {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -unity-text-align: middle-left;
+}
+
+/* Type of the entry, shown as a badge at the right end of the row. */
+.value-row-type {
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    border-width: var(--border-width);
+    border-color: var(--border-color);
+    border-radius: var(--boder-radius);
+    background-color: rgba(120, 120, 120, 0.25);
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+/* State of the entry, shown as a badge just before the type badge. */
+.value-row-state {
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    border-width: var(--border-width);
+    border-color: var(--border-color);
+    border-radius: var(--boder-radius);
+    background-color: rgba(120, 120, 120, 0.25);
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+/* Badge of a parameter the local player cannot write: the row has the value, the popup its editor, but
+   that editor is disabled. */
+.value-row-readonly {
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    border-width: var(--border-width);
+    border-color: var(--border-color);
+    border-radius: var(--boder-radius);
+    background-color: rgba(120, 120, 120, 0.18);
+    opacity: 0.7;
+    flex-shrink: 0;
+    -unity-font-style: italic;
+    -unity-text-align: middle-center;
+}
+
+/* Secondary line of a row: the technical details (key, serialized buffer), shown on hover. */
+.value-row-detail {
+    font-size: 10px;
+    color: rgba(140, 200, 255, 0.85);
+    -unity-font-style: italic;
+    margin-top: 2px;
+    margin-left: 2px;
+    white-space: normal;
+}
+
+/* Popup of a value row (see ParameterValueRow): it hangs from the window, drawn over the rows underneath,
+   so it is the box of .parameter-field but opaque. Its place and width are set from the code, in pixels. */
+.value-row-popup {
+    position: absolute;
+    background-color: rgb(40, 40, 40);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
+    padding: 4px;
+}
+
+/* Technical details of the parameter: the full name, the type, the key and the buffer. */
+.value-row-details {
+    font-size: 10px;
+    color: rgba(200, 200, 200, 0.85);
+    white-space: normal;
+    word-break: break-all;
+}
+
+/* Editor of the parameter, when the row has one (the fields are not in the list itself). */
+.value-row-editor {
+    margin-top: 4px;
+}
+
+/* Line stating the value cannot be read (the module that carried it was destroyed). */
+.value-unavailable {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    -unity-font-style: italic;
+}
+
+/* Box stating the list is empty. */
+.value-empty {
+    background-color: rgba(100, 150, 255, 0.1);
+    border-color: rgba(100, 150, 255, 0.5);
+    border-width: 1px;
+    border-radius: 3px;
+    padding: 8px;
+    margin: 5px 0;
+    white-space: normal;
+}

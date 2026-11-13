@@ -1,0 +1,36 @@
+/*
+ * Gap emulation.
+ *
+ * This UI Toolkit version has neither `gap` nor `row-gap` (the properties do not exist in IStyle),
+ * so a flex container fakes the gap with margins on its children:
+ *
+ *   <VisualElement class="flex-col gap-8">   -> 8px between the rows
+ *   <VisualElement class="flex-row gap-x-8"> -> 8px between the columns
+ *
+ * `.gap-*` only sets the vertical margin: a right margin would shrink the children of a stretched
+ * column and break the right alignment of the fields.
+ */
+
+.gap-4 > * {
+    margin-bottom: 4px;
+}
+
+.gap-8 > * {
+    margin-bottom: 8px;
+}
+
+.gap-16 > * {
+    margin-bottom: 16px;
+}
+
+.gap-x-4 > * {
+    margin-right: 4px;
+}
+
+.gap-x-8 > * {
+    margin-right: 8px;
+}
+
+.gap-x-16 > * {
+    margin-right: 16px;
+}
