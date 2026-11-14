@@ -140,6 +140,15 @@ namespace Nox.CCK.Theme {
 		/// <summary>Second accent, used by the highlights of the radial menu.</summary>
 		public static readonly Color BrightAccent = new(0f, 0.600f, 1f, 1f);
 
+		/// <summary>Ray of the hands pointing at nothing: grey on every theme.</summary>
+		public static readonly Color RayIdle = new(0.55f, 0.55f, 0.55f, 1f);
+
+		/// <summary>Ray over an interactable: the accent, deeper and more saturated.</summary>
+		public static readonly Color RayHover = new(0f, 0.453f, 0.810f, 1f);
+
+		/// <summary>Ray while pressed: the accent fully lit, the colour of a toggle that is switched on.</summary>
+		public static readonly Color RayPress = new(0.1f, 0.64f, 1f, 1f);
+
 		/// <summary>
 		/// Hover glow of the grabbables (<c>OutlineGlowFeature</c>), in HDR: it is a renderer colour, not a tint of
 		/// the UI, so a theme swaps it as well to keep the highlight in the hue of the accent.
@@ -308,6 +317,8 @@ namespace Nox.CCK.Theme {
 			theme.Add(Accent, accent);
 			theme.Add(SoftAccent, Color.Lerp(accent, Color.white, 0.35f));
 			theme.Add(BrightAccent, accent);
+			theme.Add(RayHover, Deep(accent));
+			theme.Add(RayPress, Light(accent));
 
 			theme.Add(Highlight, new Color(accent.r * HIGHLIGHT_GAIN, accent.g * HIGHLIGHT_GAIN, accent.b * HIGHLIGHT_GAIN, 1f));
 
@@ -323,6 +334,21 @@ namespace Nox.CCK.Theme {
 			theme.Add(OverlaySurface, Tint(OverlaySurface, accent));
 
 			return theme;
+		}
+
+		/// <summary>
+		/// Deeper and more saturated variation of an accent: the ray over an interactable, which has to read above
+		/// the panels without being confused with the light of a pressed control.
+		/// </summary>
+		private static Color Deep(Color color) {
+			Color.RGBToHSV(color, out var hue, out var saturation, out var value);
+			return Color.HSVToRGB(hue, Mathf.Clamp01(saturation * 1.4f), Mathf.Clamp01(value * 0.85f));
+		}
+
+		/// <summary>Fully lit variation of an accent: the ray while pressed, the colour of a toggle switched on.</summary>
+		private static Color Light(Color color) {
+			Color.RGBToHSV(color, out var hue, out var saturation, out _);
+			return Color.HSVToRGB(hue, Mathf.Clamp01(saturation * 0.9f), 1f);
 		}
 
 		/// <summary>
