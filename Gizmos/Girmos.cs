@@ -260,7 +260,7 @@ namespace Nox.CCK.Development {
 		}
 
 		/// <summary>
-		/// Side indicator (VRChat-like): a circle on the plane plus a solid cone towards
+		/// Side indicator: a circle on the plane plus a solid cone towards
 		/// <paramref name="normal"/>.
 		/// </summary>
 		public static void DrawSideRange(Vector3 position, Vector3 normal, float radius) {
