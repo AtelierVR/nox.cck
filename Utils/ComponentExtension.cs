@@ -245,7 +245,7 @@ namespace Nox.CCK.Utils {
 		}
 
 		public static void DontDestroyOnLoad(this GameObject gameObject) {
-			if (!gameObject)
+			if (!gameObject || !Application.isPlaying)
 				return;
 			Object.DontDestroyOnLoad(gameObject);
 		}
