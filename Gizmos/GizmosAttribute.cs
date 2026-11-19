@@ -25,8 +25,13 @@ namespace Nox.CCK.Development {
 #endif
 
 		/// <summary>Declares tags only: the gizmos are drawn with the default flags.</summary>
-		public GizmosAttribute(params string[] tags)
-			=> Tags = Unique(tags);
+		public GizmosAttribute(params string[] tags) {
+			Tags = Unique(tags);
+
+#if UNITY_EDITOR
+			DrawGizmo = DefaultDrawGizmo;
+#endif
+		}
 
 		/// <summary>Declares when to draw the gizmos, then the tags.</summary>
 #if UNITY_EDITOR
