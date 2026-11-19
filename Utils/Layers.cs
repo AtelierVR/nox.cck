@@ -22,6 +22,33 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		public const string Ui = "UI";
 
+		/// <summary>Layer of the hand colliders of every player.</summary>
+		public const string Hand = "Hand";
+
+		/// <summary>Layer of the colliders of the local player itself: hand player body, head, feet.</summary>
+		public const string LocalPlayer = "LocalPlayer";
+
+		/// <summary>Layer of the colliders of a player body that is not the local one.</summary>
+		public const string Player = "Player";
+
+		/// <summary>Layer of a collider a hand can grab.</summary>
+		public const string Grabbable = "Grabbable";
+
+		/// <summary>Layer a grabbable takes while a hand holds it.</summary>
+		public const string Grabbing = "Grabbing";
+
+		/// <summary>Layers the Nox runtime looks up by name.</summary>
+		public static readonly string[] Required = { Hand, LocalPlayer, Player, Grabbable, Grabbing };
+
+		#if UNITY_EDITOR
+		/// <summary>Creates the <see cref="Required"/> layers that are missing.</summary>
+		/// <returns>The names of the layers that were created.</returns>
+		public static string[] EnsureRequired() {
+			var missing = Required.Where(name => !LayerExists(name)).ToArray();
+			return missing.Length > 0 ? CreateLayers(missing) : missing;
+		}
+		#endif
+
 		/// <summary>
 		/// Checks if a layer with the specified name exists in the project.
 		/// </summary>
@@ -44,32 +71,33 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		/// <param name="names"></param>
 		#if UNITY_EDITOR
-		public static void CreateLayers(string[] names) {
-			var created = false;
+		public static string[] CreateLayers(string[] names) {
+			var created = new List<string>();
 			var li      = GetLayers();
 			var manager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
 			var layers  = manager.FindProperty("layers");
 			foreach (var name in names) {
 				if (li.ContainsKey(name))
 					continue;
-				for (var i = 0; i < 31; i++) {
+				for (var i = 6; i < 31; i++) {
 					var el = layers.GetArrayElementAtIndex(i);
-					if (!string.IsNullOrEmpty(el.stringValue) || i < 6)
+					if (!string.IsNullOrEmpty(el.stringValue))
 						continue;
 					el.stringValue = name;
-					created        = true;
+					created.Add(name);
 					break;
 				}
 			}
 
-			if (!created)
-				return;
+			if (created.Count == 0)
+				return created.ToArray();
 
 			manager.ApplyModifiedProperties();
-			Logger.LogDebug($"{names.Length} layers created: {string.Join(", ", names)}");
+			Logger.LogDebug($"{created.Count} layers created: {string.Join(", ", created)}");
+			return created.ToArray();
 		}
 		#else
-		public static void CreateLayers(string[] names)
+		public static string[] CreateLayers(string[] names)
 			=> throw new System.NotSupportedException("Creating layers is only supported in the Unity Editor.");
 		#endif
 
