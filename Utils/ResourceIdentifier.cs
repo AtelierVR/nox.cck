@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 
 namespace Nox.CCK.Utils {
 	[Serializable]
@@ -7,14 +6,14 @@ namespace Nox.CCK.Utils {
 		public static ResourceIdentifier Invalid
 			=> default;
 
-		public const char   PathSeparator    = '/';
-		public const char   PartSeparator    = ':';
-		public const string DefaultNamespace = "";
+		public const char PATH_SEPARATOR = '/';
+		public const char PART_SEPARATOR = ':';
+		public const string DEFAULT_NAMESPACE = "";
 
 		public bool IsValid()
 			=> !string.IsNullOrEmpty(@namespace) || path is { Length: > 0 };
 
-		public string   @namespace;
+		public string @namespace;
 		public string[] path;
 
 		public string Namespace
@@ -24,29 +23,58 @@ namespace Nox.CCK.Utils {
 			=> path;
 
 		public string Path
-			=> string.Join(PathSeparator, path);
+			=> string.Join(PATH_SEPARATOR, path);
 
 		public ResourceIdentifier(string @namespace, string[] path) {
 			this.@namespace = @namespace;
-			this.path       = path;
+			this.path = path;
 		}
 
 		public ResourceIdentifier(string @namespace, string path) {
 			this.@namespace = @namespace;
-			this.path = path.Split(PathSeparator)
-				.Where(p => !string.IsNullOrEmpty(p))
-				.ToArray();
+			this.path = Split(path);
+		}
+
+		private static string[] Split(string path) {
+			if (string.IsNullOrEmpty(path))
+				return Array.Empty<string>();
+
+			var count = 0;
+			var start = 0;
+
+			for (var i = 0; i <= path.Length; i++)
+				if (i == path.Length || path[i] == PATH_SEPARATOR) {
+					if (i > start)
+						count++;
+					start = i + 1;
+				}
+
+			if (count == 0)
+				return Array.Empty<string>();
+
+			var parts = new string[count];
+			var index = 0;
+			start = 0;
+
+			for (var i = 0; i <= path.Length; i++)
+				if (i == path.Length || path[i] == PATH_SEPARATOR) {
+					if (i > start)
+						parts[index++] = path.Substring(start, i - start);
+					start = i + 1;
+				}
+
+			return parts;
 		}
 
 		public static ResourceIdentifier Parse(string identifier) {
 			if (string.IsNullOrEmpty(identifier))
 				return Invalid;
 
-			var groupAndPath = identifier.Split(PartSeparator, 2);
-			var group        = groupAndPath.Length > 1 ? groupAndPath[0] : DefaultNamespace;
-			var path         = groupAndPath.Length > 1 ? groupAndPath[1] : groupAndPath[0];
+			var separator = identifier.IndexOf(PART_SEPARATOR);
 
-			return new ResourceIdentifier(group, path);
+			return separator < 0
+				? new ResourceIdentifier(DEFAULT_NAMESPACE, identifier)
+				: new ResourceIdentifier(identifier[..separator], identifier[(separator + 1)..]);
 		}
 
 		public bool HasNamespace()
@@ -56,7 +84,7 @@ namespace Nox.CCK.Utils {
 			=> path.Length > 0;
 
 		public override string ToString()
-			=> $"{@namespace}{(HasPath() && HasNamespace() ? PartSeparator : "")}{string.Join(PathSeparator, path)}";
+			=> $"{@namespace}{(HasPath() && HasNamespace() ? PART_SEPARATOR : "")}{string.Join(PATH_SEPARATOR, path)}";
 
 		public static implicit operator string(ResourceIdentifier identifier)
 			=> identifier.ToString();
