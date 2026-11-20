@@ -13,6 +13,13 @@ namespace Nox.CCK.Utils {
 		public TransformFlags Flags
 			=> _flags;
 
+		/// <summary>
+		/// Clears every field, so the instance can be filled again: a producer that reuses one scratch
+		/// instance per part does not allocate a new one on every update.
+		/// </summary>
+		public void Clear()
+			=> _flags = TransformFlags.None;
+
 		// POSITION
 
 		/// <summary>
