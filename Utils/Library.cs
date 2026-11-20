@@ -11,12 +11,12 @@ namespace Nox.CCK.Utils {
 		/// </summary>
 		public static string GetExtension(Platform platform) {
 			if (platform == Platform.Windows) return ".dll";
-			if (platform == Platform.Linux)   return ".so";
-			if (platform == Platform.MacOS)   return ".dylib";
+			if (platform == Platform.Linux) return ".so";
+			if (platform == Platform.MacOS) return ".dylib";
 			return null;
 		}
 
-        public static string CurrentLibraryExtension
+		public static string CurrentLibraryExtension
 			=> GetExtension(PlatformExtensions.CurrentPlatform);
 
 		/// <summary>
@@ -73,8 +73,13 @@ namespace Nox.CCK.Utils {
 			if (platform != Platform.Windows && platform != Platform.Linux)
 				return Array.Empty<string>();
 
-			var name = arch.GetArchitectureName();
-			return string.IsNullOrEmpty(name) ? Array.Empty<string>() : new[] { name };
+			return arch switch {
+				Architecture.X86 => new[] { "x86" },
+				Architecture.X64 => new[] { "x86_64", "x64" },
+				Architecture.Arm => new[] { "ARMv7", "arm" },
+				Architecture.Arm64 => new[] { "ARM64", "arm64" },
+				_ => Array.Empty<string>(),
+			};
 		}
 
 		/// <summary>
@@ -105,14 +110,14 @@ namespace Nox.CCK.Utils {
 		/// Infer the platform from a folder name (e.g. "win64" → Windows, "osx" → MacOS).
 		/// </summary>
 		public static Platform InferPlatform(string folder)
-            => folder.GetPlatformFromName();
+			=> folder.GetPlatformFromName();
 		public static Architecture InferArchitecture(string folder)
 			=> folder.ToLowerInvariant() switch {
-				"x86" or "win32"            => Architecture.X86,
+				"x86" or "win32" => Architecture.X86,
 				"x64" or "win64" or "x86_64" => Architecture.X64,
-				"arm" or "armv7"             => Architecture.Arm,
-				"arm64"                      => Architecture.Arm64,
-				_                            => Architecture.None,
+				"arm" or "armv7" => Architecture.Arm,
+				"arm64" => Architecture.Arm64,
+				_ => Architecture.None,
 			};
 	}
 }
