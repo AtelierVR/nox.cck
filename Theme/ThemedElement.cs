@@ -24,6 +24,8 @@ namespace Nox.CCK.Theme {
 		private Color _color;
 		private ColorBlock _colors;
 		private bool _captured;
+		private bool _hasTint;
+		private Color _tint;
 
 		/// <summary>Whether the graphic is a glyph (a text or an icon) rather than a surface.</summary>
 		private bool _glyph;
@@ -38,6 +40,11 @@ namespace Nox.CCK.Theme {
 		/// <param name="theme">Theme to apply.</param>
 		public void Apply(ThemeAsset theme) {
 			Capture();
+
+			if (_hasTint) {
+				ApplyTint();
+				return;
+			}
 
 			if (theme == null)
 				return;
@@ -54,6 +61,33 @@ namespace Nox.CCK.Theme {
 			colors.pressedColor = theme.Map(colors.pressedColor);
 			colors.selectedColor = theme.Map(colors.selectedColor);
 			colors.disabledColor = theme.Map(colors.disabledColor);
+			_selectable.colors = colors;
+		}
+
+		/// <summary>Replaces the themed colour of the element with a fixed one.</summary>
+		public void SetTint(Color tint) {
+			_tint    = tint;
+			_hasTint = true;
+		}
+
+		/// <summary>Forgets the fixed colour and lets the theme drive the element again.</summary>
+		public void ClearTint()
+			=> _hasTint = false;
+
+		/// <summary>Paints the authored surfaces with the fixed colour, keeping the strength of the shape.</summary>
+		private void ApplyTint() {
+			if (_graphic && !_background)
+				_graphic.color = new Color(_tint.r, _tint.g, _tint.b, _color.a);
+
+			if (!_selectable)
+				return;
+
+			var colors = _colors;
+			colors.normalColor      = _tint;
+			colors.highlightedColor = Color.Lerp(_tint, Color.black, 0.2f);
+			colors.pressedColor     = Color.Lerp(_tint, Color.white, 0.25f);
+			colors.selectedColor    = _tint;
+			colors.disabledColor    = new Color(_tint.r, _tint.g, _tint.b, _colors.disabledColor.a);
 			_selectable.colors = colors;
 		}
 
