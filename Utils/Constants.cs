@@ -48,5 +48,17 @@ namespace Nox.CCK.Utils {
 		public static double DefaultCrouchMultiplier = 0.5f;
 		public static double DefaultSprintMultiplier = 2f;
 		public static float  DefaultFlySpeed         = .1f;
+
+		/// <summary>
+		/// Shortest height of the body of a player, in meters: lower bound of the capsule of a controller and of
+		/// the one a viewer fits on a remote player, so a broken or missing height never shrinks the body to a dot.
+		/// </summary>
+		public const float MINIMUM_BODY_HEIGHT = 0.5f;
+
+		/// <summary>
+		/// Tallest height of the body of a player, in meters: upper bound of the same capsules, so a broken height
+		/// never stretches the body to a tower.
+		/// </summary>
+		public const float MAXIMUM_BODY_HEIGHT = 2.5f;
 	}
 }
