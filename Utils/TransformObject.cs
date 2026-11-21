@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Nox.CCK.Utils {
 	public class TransformObject {
-		public const float DefaultThreshold = 0.0001f;
+		public const float DEFAULT_THRESHOLD = 0.0001f;
 		private Vector3        _position;
 		private Quaternion     _rotation;
 		private Vector3        _scale;
@@ -41,7 +41,7 @@ namespace Nox.CCK.Utils {
 		/// <summary>
 		/// Reset the position of the transform.
 		/// </summary>
-		public void ResetPosition() 
+		public void ResetPosition()
 			=> _flags    &= ~TransformFlags.Position;
 
 		// ROTATION
@@ -167,7 +167,7 @@ namespace Nox.CCK.Utils {
 		/// <param name="transform">Transform to compare</param>
 		/// <param name="threshold">Threshold for the comparison (optional)</param>
 		/// <returns>True if the transform is equal</returns>
-		public bool Equals(TransformObject transform, float threshold = DefaultThreshold)
+		public bool Equals(TransformObject transform, float threshold = DEFAULT_THRESHOLD)
 			=> _flags == transform._flags
 				&& IsSamePosition(transform._position, threshold)
 				&& IsSameRotation(transform._rotation, threshold)
@@ -175,19 +175,19 @@ namespace Nox.CCK.Utils {
 				&& IsSameVelocity(transform._velocity, threshold)
 				&& IsSameAngular(transform._angularVelocity, threshold);
 
-		public bool IsSameScale(Vector3 value, float threshold = DefaultThreshold)
+		public bool IsSameScale(Vector3 value, float threshold = DEFAULT_THRESHOLD)
 			=> _flags.HasFlag(TransformFlags.Scale) && Vector3.Distance(_scale, value) < threshold;
 
-		public bool IsSamePosition(Vector3 value, float threshold = DefaultThreshold)
+		public bool IsSamePosition(Vector3 value, float threshold = DEFAULT_THRESHOLD)
 			=> _flags.HasFlag(TransformFlags.Position) && Vector3.Distance(_position, value) < threshold;
 
-		public bool IsSameRotation(Quaternion value, float threshold = DefaultThreshold)
+		public bool IsSameRotation(Quaternion value, float threshold = DEFAULT_THRESHOLD)
 			=> _flags.HasFlag(TransformFlags.Rotation) && Quaternion.Angle(_rotation, value) < threshold * 360f;
 
-		public bool IsSameVelocity(Vector3 value, float threshold = DefaultThreshold)
+		public bool IsSameVelocity(Vector3 value, float threshold = DEFAULT_THRESHOLD)
 			=> _flags.HasFlag(TransformFlags.Velocity) && Vector3.Distance(_velocity, value) < threshold;
 
-		public bool IsSameAngular(Vector3 value, float threshold = DefaultThreshold)
+		public bool IsSameAngular(Vector3 value, float threshold = DEFAULT_THRESHOLD)
 			=> _flags.HasFlag(TransformFlags.Angular) && Vector3.Distance(_angularVelocity, value) < threshold;
 
 		public override string ToString()
